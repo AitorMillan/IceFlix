@@ -125,10 +125,10 @@ class Client(Ice.Application):
             if  not self.prx_auth:
                 self.prx_auth = self.principal.getAuthenticator()
                 self.conexion_autenticador()
-        except IceFlix.TemporaryUnavailable:
+        except IceFlix.TemporaryUnavailable as exc:
             print("El autenticador está temporalmente fuera de servicio"
                 " inténtelo de nuevo más tarde")
-            raise IceFlix.TemporaryUnavailable
+            raise exc
 
 
     def conexion_autenticador(self):

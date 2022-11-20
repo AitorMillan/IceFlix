@@ -71,39 +71,65 @@ class Client(Ice.Application):
 
     def menu(self):
         """Muestra un menú al usuario"""
-        if not self.token_autenticacion:
-            opcion = int(input("CONEXIÓN ESTABLECIDA. ESTADO: NO AUTENTICADO. \n"
-                "Elija qué desea hacer:\n"
-                "1. Iniciar sesión en el sistema.\n"
-                "2. Buscar en el catálogo por nombre\n"
-                "3. Cambiar credenciales\n"))
+        while True:
+            if not self.token_autenticacion:
+                opcion = int(input("CONEXIÓN ESTABLECIDA. ESTADO: NO AUTENTICADO. \n"
+                    "Elija qué desea hacer:\n"
+                    "1. Iniciar sesión en el sistema.\n"
+                    "2. Buscar en el catálogo por nombre\n"
+                    "3. Cambiar credenciales\n"))
 
-            if opcion == 1:
-                self.conseguir_token()
-            elif opcion == 2:
-                None # pylint:disable=pointless-statement
-            elif opcion == 3:
-                None # pylint:disable=pointless-statement
+                if opcion == 1:
+                    self.conseguir_token()
+                elif opcion == 2:
+                    None # pylint:disable=pointless-statement
+                elif opcion == 3:
+                    self.cambiar_credenciales()
 
-        else:
-            print("hola")
+            else:
+                print("hola")
+
+
+    def cambiar_credenciales(self):
+        """Cambia las credenciales del usuario por otras"""
+        try:
+            user = self.usuario
+            self.comprueba_proxy_autenticador()
+            self.usuario = input("Introduzca su nuevo nombre de usuario\n")
+            self.contrasena = hashlib.sha256(input("Introduzca su nueva contraseña\n").encode())
+            self.autenticador.addUser(self.usuario,self.contrasena,"1234")
+            self.autenticador.removeUser(user,"1234")
+        except IceFlix.TemporaryUnavailable:
+            print("No se puede cambiar su usuario ahora mismo, inténtelo más tarde")
+        except IceFlix.Unauthorized:
+            print("Carece de los permisos para realizar esta acción")
 
 
     def conseguir_token(self):
         """Pedimos el token al authenticator"""
         try:
-            if  not self.prx_auth:
-                self.prx_auth = self.principal.getAuthenticator()
-                self.conexion_autenticador()
-
+            self.comprueba_proxy_autenticador()
             self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
 
         except IceFlix.Unauthorized:
             print("Error intentando conseguir el token de autenticación\n"
                 "")
+            self.token_autenticacion = None #Igual no hace falta porque no se asigna.
+        except IceFlix.TemporaryUnavailable:
+            print("No se ha podido conseguir el token, inténtelo más tarde")
+
+
+    def comprueba_proxy_autenticador(self):
+        """Comprobamos si tenemos el proy del autenticador"""
+        try:
+            if  not self.prx_auth:
+                self.prx_auth = self.principal.getAuthenticator()
+                self.conexion_autenticador()
         except IceFlix.TemporaryUnavailable:
             print("El autenticador está temporalmente fuera de servicio"
                 " inténtelo de nuevo más tarde")
+            raise IceFlix.TemporaryUnavailable
+
 
     def conexion_autenticador(self):
         """Creamos una conexión con el autenticador"""

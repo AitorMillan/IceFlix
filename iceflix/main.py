@@ -9,6 +9,9 @@ import Ice
 import IceFlix  # pylint:disable=import-error
 
 
+usuario = "user"
+contrasena = "pass"
+
 class Main(IceFlix.Main):
     """Servant for the IceFlix.Main interface.
 
@@ -18,12 +21,13 @@ class Main(IceFlix.Main):
 
     def getAuthenticator(self, current):  # pylint:disable=invalid-name, unused-argument
         "Return the stored Authenticator proxy."
-        print("Metodo get autenticator")
+        print("Devuelvo token")
         # TODO: implement
         return None
 
     def getCatalog(self, current):  # pylint:disable=invalid-name, unused-argument
         "Return the stored MediaCatalog proxy."
+        print("Accedes al programa")
         # TODO: implement
         return None
 
@@ -32,8 +36,9 @@ class Main(IceFlix.Main):
         # TODO: implement
         return
 
-    def announce(self, proxy, service_id, current):  # pylint:disable=invalid-name, unused-argument
+    def announce(self):  # pylint:disable=invalid-name, unused-argument
         "Announcements handler."
+        print("Has iniciado sesionñ")
         # TODO: implement
         return
 

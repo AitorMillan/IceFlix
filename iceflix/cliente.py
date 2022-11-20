@@ -3,6 +3,7 @@
 import sys
 import logging
 import time
+import hashlib
 import Ice
 import IceFlix # pylint:disable=import-error
 
@@ -24,9 +25,12 @@ class Client(Ice.Application):
 
     def __init__(self, signalPolicy=0):
         super().__init__()
-        self.usuario = None
-        self.contrasena = None
-
+        self.usuario = "user"
+        self.contrasena = hashlib.sha256("pass".encode())
+        self.token_autenticacion = None
+        self.prx_auth = None
+        self.principal = None
+        self.autenticador = None
 
     def run(self,args):
         """Handles the IceFlix client CLI command."""
@@ -41,12 +45,12 @@ class Client(Ice.Application):
                 prx_main = self.communicator().stringToProxy(args[1])
 
 
-                main = IceFlix.MainPrx.checkedCast(prx_main)
+                self.principal = IceFlix.MainPrx.checkedCast(prx_main)
 
-                if not main:
+                if not self.principal:
                     raise IceFlix.TemporaryUnavailable
 
-                main.getAuthenticator()
+                self.principal.getCatalog()
                 break
             except IceFlix.TemporaryUnavailable:
                 print("Servicio no disponible. Reintentando...")
@@ -67,13 +71,46 @@ class Client(Ice.Application):
 
     def menu(self):
         """Muestra un menú al usuario"""
-        if not self.usuario:
-            opcion = input("CONEXIÓN ESTABLECIDA. ESTADO: NO AUTENTICADO. \n"
+        if not self.token_autenticacion:
+            opcion = int(input("CONEXIÓN ESTABLECIDA. ESTADO: NO AUTENTICADO. \n"
                 "Elija qué desea hacer:\n"
                 "1. Iniciar sesión en el sistema.\n"
-                "2. Buscar en el catálogo por nombre\n")
+                "2. Buscar en el catálogo por nombre\n"
+                "3. Cambiar credenciales\n"))
+
+            if opcion == 1:
+                self.conseguir_token()
+            elif opcion == 2:
+                None # pylint:disable=pointless-statement
+            elif opcion == 3:
+                None # pylint:disable=pointless-statement
+
         else:
             print("hola")
+
+
+    def conseguir_token(self):
+        """Pedimos el token al authenticator"""
+        try:
+            if  not self.prx_auth:
+                self.prx_auth = self.principal.getAuthenticator()
+                self.conexion_autenticador()
+
+            self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+
+        except IceFlix.Unauthorized:
+            print("Error intentando conseguir el token de autenticación\n"
+                "")
+        except IceFlix.TemporaryUnavailable:
+            print("El autenticador está temporalmente fuera de servicio"
+                " inténtelo de nuevo más tarde")
+
+    def conexion_autenticador(self):
+        """Creamos una conexión con el autenticador"""
+        self.autenticador = IceFlix.AuthenticatorPrx.checkedCast(self.prx_auth)
+
+        if not self.autenticador:
+            raise IceFlix.TemporaryUnavailable
 
 
 if __name__ == "__main__":

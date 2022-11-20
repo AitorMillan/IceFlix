@@ -2,6 +2,8 @@
 
 import logging
 
+import sys 
+
 import Ice
 
 import IceFlix  # pylint:disable=import-error
@@ -16,6 +18,7 @@ class Main(IceFlix.Main):
 
     def getAuthenticator(self, current):  # pylint:disable=invalid-name, unused-argument
         "Return the stored Authenticator proxy."
+        print("Metodo get autenticator")
         # TODO: implement
         return None
 
@@ -52,8 +55,13 @@ class MainApp(Ice.Application):
         self.adapter.activate()
 
         self.proxy = self.adapter.addWithUUID(self.servant)
-
+        print("El proxy de MainApp es: ",self.proxy, flush=True)
+        
         self.shutdownOnInterrupt()
         comm.waitForShutdown()
 
         return 0
+    
+if __name__ == "__main__":
+    MainApp = MainApp()
+    sys.exit(MainApp.main(sys.argv)) 

@@ -29,8 +29,12 @@ class Client(Ice.Application):
         self.contrasena = hashlib.sha256("pass".encode())
         self.token_autenticacion = None
         self.prx_auth = None
+        self.prx_catalog = None
         self.principal = None
         self.autenticador = None
+        self.catalogo = None
+        self.peliculas = None
+
 
     def run(self, args):
         """Handles the IceFlix client CLI command."""
@@ -67,9 +71,7 @@ class Client(Ice.Application):
                   " con el servidor")
             return 0
 
-        while True:
-            self.menu()
-            break
+        self.menu()
 
         return 0
 
@@ -87,12 +89,40 @@ class Client(Ice.Application):
                 if opcion == 1:
                     self.conseguir_token()
                 elif opcion == 2:
-                    None # pylint:disable=pointless-statement
+                    self.buscar_pelis_nombre() # pylint:disable=pointless-statement
                 elif opcion == 3:
                     self.cambiar_credenciales()
 
             else:
                 print("hola")
+
+
+    def buscar_pelis_nombre(self):
+        """Buscamos en el catálogo películas por nombre"""
+
+        try:
+            self.comprueba_proxy_catalogo()
+            cadena = input("Introduzca el nombre de la película"
+                           " que desea buscar\n")
+            opcion = int(input("¿Desea buscar por el título exacto que ha introducido (0)"
+                               " o buscar todas las películas que contengan ese título? (1)\n"))
+            while opcion not in (0, 1):
+                opcion = int(input("Por favor, escoja una opción válida\n"))
+
+            if opcion == 0:
+                self.peliculas = self.catalogo.getTilesByName(cadena, True)
+            else:
+                self.peliculas = self.catalogo.getTilesByName(cadena, False)
+
+            self.muestra_pelis()
+        except IceFlix.TemporaryUnavailable:
+            print("No se puede realizar la búsqueda de su película, "
+                  "por favor, inténtelo más tarde\n")
+
+
+    def muestra_pelis(self):
+        for pelicula in self.peliculas:
+            pass
 
 
     def cambiar_credenciales(self):
@@ -104,10 +134,11 @@ class Client(Ice.Application):
             self.contrasena = hashlib.sha256(input("Introduzca su nueva contraseña\n").encode())
             self.autenticador.addUser(self.usuario, self.contrasena, "1234")
             self.autenticador.removeUser(user, "1234")
+
         except IceFlix.TemporaryUnavailable:
-            print("No se puede cambiar su usuario ahora mismo, inténtelo más tarde")
+            print("No se puede cambiar su usuario ahora mismo, inténtelo más tarden\n")
         except IceFlix.Unauthorized:
-            print("Carece de los permisos para realizar esta acción")
+            print("Carece de los permisos para realizar esta acción\n")
 
 
     def conseguir_token(self):
@@ -121,15 +152,17 @@ class Client(Ice.Application):
             print("Error intentando conseguir el token de autenticación\n")
             self.token_autenticacion = None #Igual no hace falta porque no se asigna.
         except IceFlix.TemporaryUnavailable:
-            print("No se ha podido conseguir el token, inténtelo más tarde")
-        except Ice.ConnectionRefusedException:
-            self.prx_auth = None
-            self.conseguir_token()
+            print("No se ha podido conseguir el token, inténtelo más tarde\n")
 
 
     def comprueba_proxy_autenticador(self):
         """Comprobamos si tenemos el proy del autenticador"""
         try:
+            #prx = self.principal.getAuthenticator()
+            #if prx is not self.prx_auth:
+            #    self.prx_auth = prx
+            #    self.conexion_autenticador()
+
             if  not self.prx_auth:
                 self.prx_auth = self.principal.getAuthenticator()
                 self.conexion_autenticador()
@@ -140,11 +173,39 @@ class Client(Ice.Application):
             raise exc
 
 
+
+    def comprueba_proxy_catalogo(self):
+        """Comprobamos si tenemos el proy del autenticador"""
+        try:
+            #prx = self.principal.getCatalog()
+            #if prx is not self.prx_catalog:
+            #    self.prx_catalog = prx
+            #    self.conexion_catalogo()
+
+            if  not self.prx_catalog:
+                self.prx_auth = self.principal.getCatalog()
+                self.conexion_catalogo()
+
+        except IceFlix.TemporaryUnavailable as exc:
+            print("El catálogo está temporalmente fuera de servicio"
+                  " inténtelo de nuevo más tarde")
+            raise exc
+
+
+    def conexion_catalogo(self):
+        """Creamos una conexión con el autenticador"""
+        self.catalogo = IceFlix.MediaCatalogPrx.checkedCast(self.prx_catalog)
+
+        if not self.catalogo:
+            raise IceFlix.TemporaryUnavailable
+
+
     def conexion_autenticador(self):
         """Creamos una conexión con el autenticador"""
         self.autenticador = IceFlix.AuthenticatorPrx.checkedCast(self.prx_auth)
 
         if not self.autenticador:
+            print("asd")
             raise IceFlix.TemporaryUnavailable
 
 

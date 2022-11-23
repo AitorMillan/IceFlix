@@ -32,7 +32,7 @@ class Client(Ice.Application):
         self.principal = None
         self.autenticador = None
 
-    def run(self,args):
+    def run(self, args):
         """Handles the IceFlix client CLI command."""
 
         veces_reintentado = 0
@@ -56,10 +56,15 @@ class Client(Ice.Application):
                 print("Servicio no disponible. Reintentando...")
                 time.sleep(5)
                 veces_reintentado += 1
+                #Consultar issues para el tema 01 #Pylint error no-members
+            except Ice.ConnectionRefusedException:
+                print("No se ha podido conectar")
+                time.sleep(5)
+                veces_reintentado += 1
 
         if veces_reintentado == REINTENTOS:
             print("No se ha podido establecer la conexión"
-                " con el servidor")
+                  " con el servidor")
             return 0
 
         while True:
@@ -74,10 +79,10 @@ class Client(Ice.Application):
         while True:
             if not self.token_autenticacion:
                 opcion = int(input("CONEXIÓN ESTABLECIDA. ESTADO: NO AUTENTICADO. \n"
-                    "Elija qué desea hacer:\n"
-                    "1. Iniciar sesión en el sistema.\n"
-                    "2. Buscar en el catálogo por nombre\n"
-                    "3. Cambiar credenciales\n"))
+                                   "Elija qué desea hacer:\n"
+                                   "1. Iniciar sesión en el sistema.\n"
+                                   "2. Buscar en el catálogo por nombre\n"
+                                   "3. Cambiar credenciales\n"))
 
                 if opcion == 1:
                     self.conseguir_token()
@@ -97,8 +102,8 @@ class Client(Ice.Application):
             self.comprueba_proxy_autenticador()
             self.usuario = input("Introduzca su nuevo nombre de usuario\n")
             self.contrasena = hashlib.sha256(input("Introduzca su nueva contraseña\n").encode())
-            self.autenticador.addUser(self.usuario,self.contrasena,"1234")
-            self.autenticador.removeUser(user,"1234")
+            self.autenticador.addUser(self.usuario, self.contrasena, "1234")
+            self.autenticador.removeUser(user, "1234")
         except IceFlix.TemporaryUnavailable:
             print("No se puede cambiar su usuario ahora mismo, inténtelo más tarde")
         except IceFlix.Unauthorized:
@@ -109,14 +114,17 @@ class Client(Ice.Application):
         """Pedimos el token al authenticator"""
         try:
             self.comprueba_proxy_autenticador()
-            self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+            self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,
+                                                                              self.contrasena)
 
         except IceFlix.Unauthorized:
-            print("Error intentando conseguir el token de autenticación\n"
-                "")
+            print("Error intentando conseguir el token de autenticación\n")
             self.token_autenticacion = None #Igual no hace falta porque no se asigna.
         except IceFlix.TemporaryUnavailable:
             print("No se ha podido conseguir el token, inténtelo más tarde")
+        except Ice.ConnectionRefusedException:
+            self.prx_auth = None
+            self.conseguir_token()
 
 
     def comprueba_proxy_autenticador(self):
@@ -125,9 +133,10 @@ class Client(Ice.Application):
             if  not self.prx_auth:
                 self.prx_auth = self.principal.getAuthenticator()
                 self.conexion_autenticador()
+
         except IceFlix.TemporaryUnavailable as exc:
             print("El autenticador está temporalmente fuera de servicio"
-                " inténtelo de nuevo más tarde")
+                  " inténtelo de nuevo más tarde")
             raise exc
 
 

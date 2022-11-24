@@ -6,6 +6,8 @@ import time
 import hashlib
 import Ice
 import IceFlix # pylint:disable=import-error
+from IceFlix import Media # pylint:disable=unused-import,import-error
+from IceFlix import MediaInfo # pylint:disable=unused-import,import-error
 
 
 LOG_FORMAT = '%(asctime)s - %(levelname)-7s - %(module)s:%(funcName)s:%(lineno)d - %(message)s'
@@ -33,8 +35,8 @@ class Client(Ice.Application):
         self.principal = None
         self.autenticador = None
         self.catalogo = None
-        self.peliculas = None
-
+        self.peliculas = []
+        self.seleccion = None
 
     def run(self, args):
         """Handles the IceFlix client CLI command."""
@@ -94,12 +96,36 @@ class Client(Ice.Application):
                     self.cambiar_credenciales()
 
             else:
-                print("hola")
+                estado = "CONEXIÓN ESTABLECIDA. ESTADO: AUTENTICADO. \n"
+                if not self.seleccion:
+                    estado += "Película seleccionada: Ninguna\n"
+                else:
+                    estado += "Película seleccionada: ",self.seleccion.name,"\n"
+
+                opcion = int(input(estado+
+                                   "Elija qué desea hacer:\n"
+                                   "1. Renovar su sesión.\n"
+                                   "2. Buscar en el catálogo por nombre.\n"
+                                   "3. Buscar en el catálogo por tags.\n"
+                                   "4. Seleccionar una película.\n"
+                                   "5. Ver películas que he buscado.\n"))
+
+                if opcion == 1:
+                    self.conseguir_token()
+                elif opcion == 2:
+                    self.buscar_pelis_nombre()
+                elif opcion == 3:
+                    pass
+                    #Agenda: Implementar el viernes
+                elif opcion == 4:
+                    pass
+                    #Agenda: implementar el sábado
+                elif opcion == 5:
+                    self.mostrar_peliculas()
 
 
     def buscar_pelis_nombre(self):
         """Buscamos en el catálogo películas por nombre"""
-
         try:
             self.comprueba_proxy_catalogo()
             cadena = input("Introduzca el nombre de la película"
@@ -115,24 +141,65 @@ class Client(Ice.Application):
                 self.peliculas = self.catalogo.getTilesByName(cadena, False)
 
             if not self.token_autenticacion:
-                self.muestra_pelis(0)
+                self.muestra_pelis_busqueda(0)
             else:
-                self.muestra_pelis(1)
+                self.muestra_pelis_busqueda(1)
+
         except IceFlix.TemporaryUnavailable:
-            print("No se puede realizar la búsqueda de su película, "
+            print("El servicio se encuentra temporalmente fuera de servicio, "
                   "por favor, inténtelo más tarde\n")
+        except IceFlix.Unauthorized:
+            print("Su sesión ha caducado. Por favor, renuévela")
+            self.token_autenticacion = None
+        except IceFlix.WrongMediaId:
+            print("Ha habido un eror al procesar los títulos\n")
 
 
-    def muestra_pelis(self,autenticado):
-        """Mostramos las películas. Diferente si el usuario está autenticado en el sistema o no"""
-        i = 1
-        if autenticado == 0:
-            for pelicula in self.peliculas:
-                print(i,":",pelicula)
-                i += 1
-        else:
-            for pelicula in self.peliculas:
-                pass
+
+    def muestra_pelis_busqueda(self,autenticado):
+        """Mostramos las películas que se han obtenido de una búsqueda.
+        Diferente si el usuario está autenticado en el sistema o no"""
+        try:
+            i = 1
+
+            if len(self.peliculas == 0):
+                print("No se han obtenido resultados para su búsqueda.\n")
+            elif autenticado == 0:
+                for pelicula in self.peliculas:
+                    print(i,":",pelicula)
+                    i += 1
+                print("Para ver más información de las películas inicie sesión\n")
+            else:
+                listado = []
+
+                for pelicula in self.peliculas:
+                    media = self.catalogo.getTile(pelicula,self.token_autenticacion)
+                    media_info = media.info
+                    print(i,": ",media_info.name, " [",media_info.tags,"]")
+                    listado.append(media_info)
+                    i += 1
+
+                self.peliculas = listado.copy()
+
+        except IceFlix.Unauthorized as exc:
+            raise exc
+        except IceFlix.WrongMediaId as exc:
+            raise exc
+        except IceFlix.TemporaryUnavailable as exc:
+            raise exc
+
+
+    def mostrar_peliculas(self):
+        """Mostramos las películas almacenadas en memoria"""
+        i = 0
+        if len(self.peliculas == 0):
+            print("No has realziado ninguna búsqueda de películas")
+            return 0
+
+        for pelicula in self.peliculas:
+            print((i+1),": ",pelicula.name, " [",pelicula.tags,"]")
+            i += 1
+        return i
 
 
     def cambiar_credenciales(self):
@@ -144,6 +211,7 @@ class Client(Ice.Application):
             self.contrasena = hashlib.sha256(input("Introduzca su nueva contraseña\n").encode())
             self.autenticador.addUser(self.usuario, self.contrasena, "1234")
             self.autenticador.removeUser(user, "1234")
+            print("Usuario cambiado correctamente")
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede cambiar su usuario ahora mismo, inténtelo más tarden\n")
@@ -158,6 +226,7 @@ class Client(Ice.Application):
             self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,
                                                                               self.contrasena)
             print("Token obtenido correctamente\n")
+
         except IceFlix.Unauthorized:
             print("Error intentando conseguir el token de autenticación\n")
             self.token_autenticacion = None #Igual no hace falta porque no se asigna.

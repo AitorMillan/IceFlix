@@ -89,7 +89,7 @@ class Client(Ice.Application):
                 if opcion == 1:
                     self.conseguir_token()
                 elif opcion == 2:
-                    self.buscar_pelis_nombre() # pylint:disable=pointless-statement
+                    self.buscar_pelis_nombre()
                 elif opcion == 3:
                     self.cambiar_credenciales()
 
@@ -114,15 +114,25 @@ class Client(Ice.Application):
             else:
                 self.peliculas = self.catalogo.getTilesByName(cadena, False)
 
-            self.muestra_pelis()
+            if not self.token_autenticacion:
+                self.muestra_pelis(0)
+            else:
+                self.muestra_pelis(1)
         except IceFlix.TemporaryUnavailable:
             print("No se puede realizar la búsqueda de su película, "
                   "por favor, inténtelo más tarde\n")
 
 
-    def muestra_pelis(self):
-        for pelicula in self.peliculas:
-            pass
+    def muestra_pelis(self,autenticado):
+        """Mostramos las películas. Diferente si el usuario está autenticado en el sistema o no"""
+        i = 1
+        if autenticado == 0:
+            for pelicula in self.peliculas:
+                print(i,":",pelicula)
+                i += 1
+        else:
+            for pelicula in self.peliculas:
+                pass
 
 
     def cambiar_credenciales(self):
@@ -147,7 +157,7 @@ class Client(Ice.Application):
             self.comprueba_proxy_autenticador()
             self.token_autenticacion = self.autenticador.refreshAuthorization(self.usuario,
                                                                               self.contrasena)
-
+            print("Token obtenido correctamente\n")
         except IceFlix.Unauthorized:
             print("Error intentando conseguir el token de autenticación\n")
             self.token_autenticacion = None #Igual no hace falta porque no se asigna.
@@ -205,7 +215,6 @@ class Client(Ice.Application):
         self.autenticador = IceFlix.AuthenticatorPrx.checkedCast(self.prx_auth)
 
         if not self.autenticador:
-            print("asd")
             raise IceFlix.TemporaryUnavailable
 
 

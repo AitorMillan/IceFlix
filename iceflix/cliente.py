@@ -124,6 +124,36 @@ class Client(Ice.Application):
                     self.mostrar_peliculas()
 
 
+    def buscar_pelis_tags(self):
+        """Buscamos en el catálogo películas por tags"""
+        try:
+            tags = []
+            tags.append(input("Introduzca la etiqueta por la que desea buscar\n"))
+            while input("¿Desea añadir más etiquetas? (S/N)\n").capitalize() == "S":
+                tags.append(input("Introduzca otra etiqueta por la que desea buscar\n"))
+
+            opcion = int(input("¿Desea buscar películas que contengan alguna de las etiquetas (0)"
+                               " o buscar películas que contengan todas las etiquetas (1)\n"))
+            while opcion not in (0,1):
+                opcion = int(input("Por favor, escoja una opción válida\n"))
+
+            if opcion == 0:
+                self.peliculas = self.catalogo.getTilesByTags(tags,False,self.token_autenticacion)
+            else:
+                self.peliculas = self.catalogo.getTilesByTags(tags,True,self.token_autenticacion)
+
+            self.muestra_pelis_busqueda(1)
+
+        except IceFlix.Unauthorized:
+            print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
+            self.token_autenticacion = None
+        except IceFlix.WrongMediaId:
+            print("Ha habido un eror al procesar los títulos\n")
+        except IceFlix.TemporaryUnavailable:
+            print("El servicio se encuentra temporalmente fuera de servicio, "
+                  "por favor, inténtelo más tarde\n")
+
+
     def buscar_pelis_nombre(self):
         """Buscamos en el catálogo películas por nombre"""
         try:

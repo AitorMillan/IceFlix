@@ -100,7 +100,7 @@ class Client(Ice.Application):
                 if not self.seleccion:
                     estado += "Película seleccionada: Ninguna\n"
                 else:
-                    estado += "Película seleccionada: ",self.seleccion.name,"\n"
+                    estado += "Película seleccionada: ",self.seleccion.info.name,"\n"
 
                 opcion = int(input(estado+
                                    "Elija qué desea hacer:\n"
@@ -108,20 +108,95 @@ class Client(Ice.Application):
                                    "2. Buscar en el catálogo por nombre.\n"
                                    "3. Buscar en el catálogo por tags.\n"
                                    "4. Seleccionar una película.\n"
-                                   "5. Ver películas que he buscado.\n"))
+                                   "5. Ver películas que he buscado.\n"
+                                   "6. Añadir tags a una película\n"
+                                   "7. Eliminar tags de una película\n"
+                                   "8. Abrir menú de aministrador\n"
+                                   "9. Cerrar sesión\n"))
 
                 if opcion == 1:
                     self.conseguir_token()
                 elif opcion == 2:
                     self.buscar_pelis_nombre()
                 elif opcion == 3:
-                    pass
-                    #Agenda: Implementar el viernes
+                    self.buscar_pelis_tags()
                 elif opcion == 4:
-                    pass
-                    #Agenda: implementar el sábado
+                    self.selecciona_pelicula()
                 elif opcion == 5:
                     self.mostrar_peliculas()
+                elif opcion == 6:
+                    self.anadir_tags()
+                elif opcion == 7:
+                    self.eliminar_tags()
+                elif opcion == 8:
+                    pass
+                elif opcion == 9:
+                    self.token_autenticacion = None
+
+
+    def anadir_tags(self):
+        """Añadimos tags a la película seleccionada"""
+        if not self.seleccion:
+            print("Por favor seleccione una película antes de añadir tags\n")
+        else:
+            tags = []
+            try:
+                tags.append(input("Introduce la etiqueta que deseas añadir a la película ",
+                                       self.seleccion.info.name,"\n"))
+
+                while input("¿Desea añadir más etiquetas? (S/N)\n").capitalize() == "S":
+                    tags.append(input("Introduzca la etiqueta\n"))
+
+                self.catalogo.addTags(self.seleccion.mediaId,tags,self.token_autenticacion)
+                print("Las etiquetas se han añadido correctamente")
+
+            except IceFlix.Unauthorized:
+                print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
+                self.token_autenticacion = None
+            except IceFlix.WrongMediaId:
+                print("Ha habido un error al añadir los tags a la película seleccionada.\n"
+                      "Por favor, inténtelo con otra película\n")
+
+
+    def eliminar_tags(self):
+        """Eliminamos tags de la película seleccionada"""
+        if not self.seleccion:
+            print("Por favor seleccione una película antes de eliminar tags\n")
+        else:
+            tags = []
+            try:
+                tags.append(input("Introduce la etiqueta que deseas eliminar de la película ",
+                                       self.seleccion.info.name,"\n"))
+
+                while input("¿Desea añadir más etiquetas a eliminar? (S/N)\n").capitalize() == "S":
+                    tags.append(input("Introduzca la etiqueta\n"))
+
+                self.catalogo.removeTags(self.seleccion.mediaId,tags,self.token_autenticacion)
+                print("Las etiquetas se han eliminado correctamente\n")
+
+            except IceFlix.Unauthorized:
+                print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
+                self.token_autenticacion = None
+            except IceFlix.WrongMediaId:
+                print("Ha habido un error al eliminar los tags a la película seleccionada.\n"
+                      "Por favor, inténtelo con otra película")
+
+
+    def selecciona_pelicula(self):
+        """Seleccionamos una película de una búsqueda"""
+        seleccion = None
+
+        if len(self.peliculas) == 0:
+            print("Por favor busque películas antes de seleccionar alguna\n.")
+        else:
+            while seleccion not in range(1,len(self.peliculas)+1):
+                try:
+                    self.mostrar_peliculas()
+                    seleccion = int("Introduzca el número de la película que "
+                                    "desea seleccionar\n")
+                except ValueError:
+                    print("Por favor, introduzca un valor válido")
+            self.seleccion = self.peliculas[seleccion-1]
 
 
     def buscar_pelis_tags(self):
@@ -204,9 +279,8 @@ class Client(Ice.Application):
 
                 for pelicula in self.peliculas:
                     media = self.catalogo.getTile(pelicula,self.token_autenticacion)
-                    media_info = media.info
-                    print(i,": ",media_info.name, " [",media_info.tags,"]")
-                    listado.append(media_info)
+                    print(i,": ",media.info.name, " [",media.info.tags,"]")
+                    listado.append(media)
                     i += 1
 
                 self.peliculas = listado.copy()
@@ -224,12 +298,11 @@ class Client(Ice.Application):
         i = 0
         if len(self.peliculas == 0):
             print("No has realziado ninguna búsqueda de películas")
-            return 0
 
-        for pelicula in self.peliculas:
-            print((i+1),": ",pelicula.name, " [",pelicula.tags,"]")
-            i += 1
-        return i
+        else:
+            for pelicula in self.peliculas:
+                print((i+1),": ",pelicula.info.name, " [",pelicula.info.tags,"]")
+                i += 1
 
 
     def cambiar_credenciales(self):

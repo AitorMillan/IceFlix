@@ -37,6 +37,7 @@ class Client(Ice.Application):
         self.catalogo = None
         self.peliculas = []
         self.seleccion = None
+        self.admin = False
 
     def run(self, args):
         """Handles the IceFlix client CLI command."""
@@ -74,7 +75,7 @@ class Client(Ice.Application):
             return 0
 
         self.menu()
-
+        print("Hasta la próxima :)")
         return 0
 
 
@@ -86,7 +87,8 @@ class Client(Ice.Application):
                                    "Elija qué desea hacer:\n"
                                    "1. Iniciar sesión en el sistema.\n"
                                    "2. Buscar en el catálogo por nombre\n"
-                                   "3. Cambiar credenciales\n"))
+                                   "3. Cambiar credenciales\n"
+                                   "4. Salir del programa\n"))
 
                 if opcion == 1:
                     self.conseguir_token()
@@ -94,6 +96,8 @@ class Client(Ice.Application):
                     self.buscar_pelis_nombre()
                 elif opcion == 3:
                     self.cambiar_credenciales()
+                elif opcion == 4:
+                    break
 
             else:
                 estado = "CONEXIÓN ESTABLECIDA. ESTADO: AUTENTICADO. \n"
@@ -101,7 +105,6 @@ class Client(Ice.Application):
                     estado += "Película seleccionada: Ninguna\n"
                 else:
                     estado += "Película seleccionada: ",self.seleccion.info.name,"\n"
-
                 opcion = int(input(estado+
                                    "Elija qué desea hacer:\n"
                                    "1. Renovar su sesión.\n"
@@ -129,9 +132,26 @@ class Client(Ice.Application):
                 elif opcion == 7:
                     self.eliminar_tags()
                 elif opcion == 8:
-                    pass
+                    self.menu_admin(estado)
                 elif opcion == 9:
                     self.token_autenticacion = None
+
+
+    def menu_admin(self,estado):
+        while True:
+            try:
+                opcion = int(input(estado+
+                                   "Elija qué desea hacer\n"
+                                   "1. Cambiar el título de la película seleccionada\n"
+                                   "5. Salir del menú de administrador\n"))
+                if opcion == 1:
+                    pass
+                elif opcion == 5:
+                    break
+
+            except ValueError:
+                print("Por favor, introduzca un valor válido")
+
 
 
     def anadir_tags(self):

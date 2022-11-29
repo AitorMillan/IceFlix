@@ -142,14 +142,47 @@ class Client(Ice.Application):
                 opcion = int(input(estado+
                                    "Elija qué desea hacer\n"
                                    "1. Cambiar el título de la película seleccionada\n"
+                                   "2. Añadir usuarios\n"
+                                   "3. Eliminar usuarios\n"
                                    "5. Salir del menú de administrador\n"))
                 if opcion == 1:
                     self.renombra_peli()
+                elif opcion == 2:
+                    pass #Añadir método para añadir usuarios
+                elif opcion == 3:
+                    pass #Añadir método para eliminar usuarios
                 elif opcion == 5:
                     break
 
             except ValueError:
                 print("Por favor, introduzca un valor válido")
+
+
+    def eliminar_usuario(self):
+        try:
+            self.comprueba_proxy_autenticador()
+            usuario = input("Introduzca el nombre de usuario a eliminar\n")
+            self.autenticador.removeUser(usuario, "1234")
+            print("Usuario eliminado correctamente\n")
+
+        except IceFlix.TemporaryUnavailable:
+            print("No se puede añadir el usuario ahora mismo, inténtelo más tarden\n")
+        except IceFlix.Unauthorized:
+            print("Carece de los permisos para realizar esta acción\n")       
+
+
+    def anadir_usuario(self):
+        try:
+            self.comprueba_proxy_autenticador()
+            usuario = input("Introduzca el nombre de usuario\n")
+            contrasena = hashlib.sha256(input("Introduzca la contraseña\n").encode())
+            self.autenticador.addUser(usuario, contrasena, "1234")
+            print("Usuario añadido correctamente\n")
+
+        except IceFlix.TemporaryUnavailable:
+            print("No se puede eliminar el usuario ahora mismo, inténtelo más tarden\n")
+        except IceFlix.Unauthorized:
+            print("Carece de los permisos para realizar esta acción\n")
 
 
     def renombra_peli(self):
@@ -162,7 +195,7 @@ class Client(Ice.Application):
                 nuevo_nombre = input("Introduzca el nuevo título que deseas para ",
                                      self.seleccion.info.name,"\n")
                 self.catalogo.renameTile(self.seleccion.mediaId,nuevo_nombre,"1234")
-                
+
             except IceFlix.TemporaryUnavailable:
                 print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
             except IceFlix.Unauthorized:

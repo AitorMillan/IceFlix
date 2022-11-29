@@ -56,8 +56,6 @@ class Client(Ice.Application):
 
                 if not self.principal:
                     raise IceFlix.TemporaryUnavailable
-
-                self.principal.getCatalog()
                 break
             except IceFlix.TemporaryUnavailable:
                 print("Servicio no disponible. Reintentando...")
@@ -138,6 +136,7 @@ class Client(Ice.Application):
 
 
     def menu_admin(self,estado):
+        """Menú del administrador"""
         while True:
             try:
                 opcion = int(input(estado+
@@ -145,13 +144,33 @@ class Client(Ice.Application):
                                    "1. Cambiar el título de la película seleccionada\n"
                                    "5. Salir del menú de administrador\n"))
                 if opcion == 1:
-                    pass
+                    self.renombra_peli()
                 elif opcion == 5:
                     break
 
             except ValueError:
                 print("Por favor, introduzca un valor válido")
 
+
+    def renombra_peli(self):
+        """Cambiamos el nombre a la película seleccionada"""
+        if not self.seleccion:
+            print("POr favor seleccione la película que desea renombrar")
+        else:
+            try:
+                self.comprueba_proxy_catalogo()
+                nuevo_nombre = input("Introduzca el nuevo título que deseas para ",
+                                     self.seleccion.info.name,"\n")
+                self.catalogo.renameTile(self.seleccion.mediaId,nuevo_nombre,"1234")
+                
+            except IceFlix.TemporaryUnavailable:
+                print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
+            except IceFlix.Unauthorized:
+                print("Ha habido un error al ejecutar la opción administrativa. Por favor "
+                      "póngase en contacto con su administrador\n")
+            except IceFlix.WrongMediaId:
+                print("Ha habido un error al añadir los tags a la película seleccionada.\n"
+                      "Por favor, inténtelo con otra película\n")
 
 
     def anadir_tags(self):
@@ -161,6 +180,7 @@ class Client(Ice.Application):
         else:
             tags = []
             try:
+                self.comprueba_proxy_catalogo()
                 tags.append(input("Introduce la etiqueta que deseas añadir a la película ",
                                        self.seleccion.info.name,"\n"))
 
@@ -176,6 +196,8 @@ class Client(Ice.Application):
             except IceFlix.WrongMediaId:
                 print("Ha habido un error al añadir los tags a la película seleccionada.\n"
                       "Por favor, inténtelo con otra película\n")
+            except IceFlix.TemporaryUnavailable:
+                print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
 
 
     def eliminar_tags(self):
@@ -185,6 +207,7 @@ class Client(Ice.Application):
         else:
             tags = []
             try:
+                self.comprueba_proxy_catalogo()
                 tags.append(input("Introduce la etiqueta que deseas eliminar de la película ",
                                        self.seleccion.info.name,"\n"))
 
@@ -200,7 +223,8 @@ class Client(Ice.Application):
             except IceFlix.WrongMediaId:
                 print("Ha habido un error al eliminar los tags a la película seleccionada.\n"
                       "Por favor, inténtelo con otra película")
-
+            except IceFlix.TemporaryUnavailable:
+                print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
 
     def selecciona_pelicula(self):
         """Seleccionamos una película de una búsqueda"""
@@ -222,6 +246,7 @@ class Client(Ice.Application):
     def buscar_pelis_tags(self):
         """Buscamos en el catálogo películas por tags"""
         try:
+            self.comprueba_proxy_catalogo()
             tags = []
             tags.append(input("Introduzca la etiqueta por la que desea buscar\n"))
             while input("¿Desea añadir más etiquetas? (S/N)\n").capitalize() == "S":

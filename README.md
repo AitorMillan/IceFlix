@@ -26,6 +26,14 @@ It contains the following files and directories:
   It needs to be modified in order to adeccuate to the package name and
   console handler functions.
   
+  # Decisiones de diseño
+  
+  ## Persistencia
+  
+  Para implementar de forma persistente los usuarios y contraseñas de la aplicación he utilizado un fichero de texto y usado las funciones que da python para abrir y cerrar ficheros. No es la forma más eficiente ya que si queremos eliminar un usuario la única forma que hay es la de leer todo el fichero, y volver a escribir todas las líneas excepto las que no queremos, lo cual en archivos de gran tamaño no es viable.
+  
+  Debido a la falta de tiempo he decidido implementarlo de esta manera, con más tiempo hubiera intentado implementarlo mediante una base de datos, ya que me parece más eficiente.
+  
   # Errores corregidos
   
   ## Pylint no-members

@@ -50,6 +50,7 @@ class ManejadorUsuarios():
         except ValueError:
             print(f"El usuario {usuario} no se encuentra registrado")
 
+
 class Client(Ice.Application):
     """Clase que implementa al cliente de IceFlix"""
 
@@ -221,7 +222,6 @@ class Client(Ice.Application):
 
 
     def renombra_peli(self):
-        #TRY-EXCEPT
         """Cambiamos el nombre a la película seleccionada"""
         if not self.seleccion:
             print("POr favor seleccione la película que desea renombrar")
@@ -256,18 +256,31 @@ class Client(Ice.Application):
 
                 while input("¿Desea añadir más etiquetas? (S/N)\n").capitalize() == "S":
                     tags.append(input("Introduzca la etiqueta\n"))
-
-                self.catalogo.addTags(self.seleccion.mediaId,tags,self.token_autenticacion)
-                print("Las etiquetas se han añadido correctamente")
-
-            except IceFlix.Unauthorized:
-                print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
-                self.token_autenticacion = None
-            except IceFlix.WrongMediaId:
-                print("Ha habido un error al añadir los tags a la película seleccionada.\n"
-                      "Por favor, inténtelo con otra película\n")
+                num_reintentos = 0
             except IceFlix.TemporaryUnavailable:
-                print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
+                print("El catálogo no se encuentra actualmente disponible, pruebe más tarde\n")
+                num_reintentos = 3
+
+            while num_reintentos < REINTENTOS:
+                try:
+                    self.comprueba_proxy_autenticador()
+                    self.catalogo.addTags(self.seleccion.mediaId,tags,self.token_autenticacion)
+                    print("Las etiquetas se han añadido correctamente\n")
+                    break
+                except IceFlix.Unauthorized:
+                    self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                    num_reintentos += 1
+                except IceFlix.TemporaryUnavailable:
+                    print("Ha ocurrido un error, por favor trate de iniciar sesión de nuevo\n")
+                    self.token_autenticacion = None
+                    break
+                except IceFlix.WrongMediaId:
+                    print("Ha habido un error al añadir los tags a la película seleccionada.\n"
+                          "Por favor, inténtelo con otra película\n")
+                    break
+            if num_reintentos == REINTENTOS:
+                print("No se han podido añadir los tags\n")
+
 
 
     def eliminar_tags(self):
@@ -284,18 +297,32 @@ class Client(Ice.Application):
 
                 while input("¿Desea añadir más etiquetas a eliminar? (S/N)\n").capitalize() == "S":
                     tags.append(input("Introduzca la etiqueta\n"))
-
-                self.catalogo.removeTags(self.seleccion.mediaId,tags,self.token_autenticacion)
-                print("Las etiquetas se han eliminado correctamente\n")
-
-            except IceFlix.Unauthorized:
-                print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
-                self.token_autenticacion = None
-            except IceFlix.WrongMediaId:
-                print("Ha habido un error al eliminar los tags a la película seleccionada.\n"
-                      "Por favor, inténtelo con otra película")
+                num_reintentos = 0
             except IceFlix.TemporaryUnavailable:
                 print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
+                num_reintentos = 3
+
+            while num_reintentos < REINTENTOS:
+                try:
+                    self.comprueba_proxy_autenticador()
+                    self.catalogo.removeTags(self.seleccion.mediaId,tags,self.token_autenticacion)
+                    print("Las etiquetas se han eliminado correctamente\n")
+                    break
+                except IceFlix.Unauthorized:
+                    self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                    num_reintentos+=1
+                except IceFlix.WrongMediaId:
+                    print("Ha habido un error al eliminar los tags a la película seleccionada.\n"
+                          "Por favor, inténtelo con otra película\n")
+                    break
+                except IceFlix.TemporaryUnavailable:
+                    print("Ha ocurrido un error, por favor trate de iniciar sesión de nuevo\n")
+                    self.token_autenticacion = None
+                    break
+
+            if num_reintentos == REINTENTOS:
+                print("No se han podido eliminar los tags\n")
+
 
     def selecciona_pelicula(self):
         """Seleccionamos una película de una búsqueda"""
@@ -328,22 +355,34 @@ class Client(Ice.Application):
                                " o buscar películas que contengan todas las etiquetas (1)\n"))
             while opcion not in (0,1):
                 opcion = int(input("Por favor, escoja una opción válida\n"))
-
-            if opcion == 0:
-                self.peliculas = self.catalogo.getTilesByTags(tags,False,self.token_autenticacion)
-            else:
-                self.peliculas = self.catalogo.getTilesByTags(tags,True,self.token_autenticacion)
-
-            self.muestra_pelis_busqueda(1)
-
-        except IceFlix.Unauthorized:
-            print("Su sesión ha caducado, por favor, inicie sesión de nuevo")
-            self.token_autenticacion = None
-        except IceFlix.WrongMediaId:
-            print("Ha habido un eror al procesar los títulos\n")
+            num_reintentos = 0
         except IceFlix.TemporaryUnavailable:
             print("El servicio se encuentra temporalmente fuera de servicio, "
                   "por favor, inténtelo más tarde\n")
+            num_reintentos = 3
+
+        while num_reintentos < REINTENTOS:
+            try:
+                self.comprueba_proxy_autenticador()
+                if opcion == 0:
+                    self.peliculas = self.catalogo.getTilesByTags(tags,False,
+                                                                self.token_autenticacion)
+                else:
+                    self.peliculas = self.catalogo.getTilesByTags(tags,True,
+                                                                self.token_autenticacion)
+
+                self.muestra_pelis_busqueda(1)
+                break
+            except IceFlix.Unauthorized:
+                self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                num_reintentos += 1
+            except IceFlix.WrongMediaId:
+                print("Ha habido un eror al procesar los títulos\n")
+                break
+            except IceFlix.TemporaryUnavailable:
+                print("Ha ocurrido un error, por favor trate de iniciar sesión de nuevo\n")
+                self.token_autenticacion = None
+                break
 
 
     def buscar_pelis_nombre(self):
@@ -352,63 +391,78 @@ class Client(Ice.Application):
         try:
             self.comprueba_proxy_catalogo()
             cadena = input("Introduzca el nombre de la película"
-                           " que desea buscar\n")
+                        " que desea buscar\n")
             opcion = int(input("¿Desea buscar por el título exacto que ha introducido (0)"
-                               " o buscar todas las películas que contengan ese título? (1)\n"))
+                            " o buscar todas las películas que contengan ese título? (1)\n"))
             while opcion not in (0, 1):
                 opcion = int(input("Por favor, escoja una opción válida\n"))
-
-            if opcion == 0:
-                self.peliculas = self.catalogo.getTilesByName(cadena, True)
-            else:
-                self.peliculas = self.catalogo.getTilesByName(cadena, False)
-
-            if not self.token_autenticacion:
-                self.muestra_pelis_busqueda(0)
-            else:
-                self.muestra_pelis_busqueda(1)
+            num_reintentos = 0
 
         except IceFlix.TemporaryUnavailable:
             print("El servicio se encuentra temporalmente fuera de servicio, "
-                  "por favor, inténtelo más tarde\n")
-        except IceFlix.Unauthorized:
-            print("Su sesión ha caducado. Por favor, renuévela")
-            self.token_autenticacion = None
-        except IceFlix.WrongMediaId:
-            print("Ha habido un eror al procesar los títulos\n")
+                "por favor, inténtelo más tarde\n")
+            num_reintentos = 3
 
+        while num_reintentos < REINTENTOS:
+            try:
+                if opcion == 0:
+                    self.peliculas = self.catalogo.getTilesByName(cadena, True)
+                else:
+                    self.peliculas = self.catalogo.getTilesByName(cadena, False)
+
+                if not self.token_autenticacion:
+                    self.muestra_pelis_busqueda(0)
+                else:
+                    self.muestra_pelis_busqueda(1)
+                break
+            except IceFlix.Unauthorized:
+                self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                num_reintentos += 1
+            except IceFlix.WrongMediaId:
+                print("Ha habido un eror al procesar los títulos\n")
+                break
+            except IceFlix.TemporaryUnavailable:
+                print("Ha ocurrido un error, por favor trate de iniciar sesión de nuevo\n")
+                self.token_autenticacion = None
+                break
 
 
     def muestra_pelis_busqueda(self,autenticado):
+        #TRY-EXCEPT
         """Mostramos las películas que se han obtenido de una búsqueda.
         Diferente si el usuario está autenticado en el sistema o no"""
-        try:
-            i = 1
 
-            if len(self.peliculas == 0):
-                print("No se han obtenido resultados para su búsqueda.\n")
-            elif autenticado == 0:
-                for pelicula in self.peliculas:
-                    print(i,":",pelicula)
-                    i += 1
-                print("Para ver más información de las películas inicie sesión\n")
-            else:
-                listado = []
+        i = 1
 
-                for pelicula in self.peliculas:
-                    media = self.catalogo.getTile(pelicula,self.token_autenticacion)
-                    print(i,": ",media.info.name, " [",media.info.tags,"]")
-                    listado.append(media)
-                    i += 1
+        if len(self.peliculas == 0):
+            print("No se han obtenido resultados para su búsqueda.\n")
+        elif autenticado == 0:
+            for pelicula in self.peliculas:
+                print(i,":",pelicula)
+                i += 1
+            print("Para ver más información de las películas inicie sesión\n")
+        else:
+            num_reintentos = 0
+            while num_reintentos < REINTENTOS:
+                try:
+                    listado = []
 
-                self.peliculas = listado.copy()
+                    for pelicula in self.peliculas:
+                        media = self.catalogo.getTile(pelicula,self.token_autenticacion)
+                        print(i,": ",media.info.name, " [",media.info.tags,"]")
+                        listado.append(media)
+                        i += 1
 
-        except IceFlix.Unauthorized as exc:
-            raise exc
-        except IceFlix.WrongMediaId as exc:
-            raise exc
-        except IceFlix.TemporaryUnavailable as exc:
-            raise exc
+                    self.peliculas = listado.copy()
+                    break
+
+                except IceFlix.Unauthorized:
+                    self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                    num_reintentos += 1
+                except IceFlix.WrongMediaId as exc:
+                    raise exc
+                except IceFlix.TemporaryUnavailable as exc:
+                    raise exc
 
 
     def mostrar_peliculas(self):
@@ -472,8 +526,6 @@ class Client(Ice.Application):
                 self.conexion_autenticador()
 
         except IceFlix.TemporaryUnavailable as exc:
-            print("El autenticador está temporalmente fuera de servicio"
-                  " inténtelo de nuevo más tarde")
             raise exc
 
 

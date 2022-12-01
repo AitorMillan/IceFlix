@@ -22,6 +22,33 @@ def setup_logging():
         format=LOG_FORMAT,
     )
 
+class ManejadorUsuarios():
+    """Clase para manejar la persistencia de usuarios"""
+
+
+    def anadir_usuario(self, ruta, usuario, contrasena):
+        "Añadimos un usuario a la ruta especificada"
+        with open(ruta,"a", encoding="utf-8") as archivo:
+            archivo.write("\nUser:\n")
+            archivo.write("Usuario = "+usuario+"\n")
+            archivo.write("Contraseña = "+contrasena+"\n")
+            archivo.close()
+
+
+    def eliminar_usuario(self, ruta, usuario):
+        """Eliminamos un usuario de la ruta especificada"""
+        with open(ruta,"r",encoding="utf-8") as archivo:
+            lineas = archivo.readlines()
+            archivo.close()
+        try:
+            posicion = lineas.index("Usuario = "+usuario+"\n")
+            with open(ruta,"w",encoding="utf-8") as archivo:
+                for num_linea, linea in enumerate(lineas):
+                    if num_linea not in range(posicion-2,posicion+2):
+                        archivo.write(linea)
+                archivo.close()
+        except ValueError:
+            print(f"El usuario {usuario} no se encuentra registrado")
 
 class Client(Ice.Application):
     """Clase que implementa al cliente de IceFlix"""
@@ -166,6 +193,8 @@ class Client(Ice.Application):
             usuario = input("Introduzca el nombre de usuario a eliminar\n")
             self.autenticador.removeUser(usuario, "1234")
             print("Usuario eliminado correctamente\n")
+            manejador = ManejadorUsuarios()
+            manejador.eliminar_usuario("usuarios.txt",usuario)
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede añadir el usuario ahora mismo, inténtelo más tarden\n")
@@ -182,6 +211,8 @@ class Client(Ice.Application):
                                                         "la contraseña\n").encode()).hexdigest()
             self.autenticador.addUser(usuario, contrasena, "1234")
             print("Usuario añadido correctamente\n")
+            manejador = ManejadorUsuarios()
+            manejador.anadir_usuario("usuarios.txt",usuario,contrasena)
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede eliminar el usuario ahora mismo, inténtelo más tarden\n")
@@ -396,6 +427,7 @@ class Client(Ice.Application):
         """Cambia las credenciales del usuario por otras"""
         try:
             user = self.usuario
+            manejador = ManejadorUsuarios()
             self.comprueba_proxy_autenticador()
             self.usuario = input("Introduzca su nuevo nombre de usuario\n")
             self.contrasena = hashlib.sha256(getpass.getpass("Introduzca "
@@ -403,6 +435,8 @@ class Client(Ice.Application):
             self.autenticador.addUser(self.usuario, self.contrasena, "1234")
             self.autenticador.removeUser(user, "1234")
             print("Usuario cambiado correctamente")
+            manejador.anadir_usuario("usuarios.txt",self.usuario,self.contrasena)
+            manejador.eliminar_usuario("usuarios.txt",user)
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede cambiar su usuario ahora mismo, inténtelo más tarden\n")

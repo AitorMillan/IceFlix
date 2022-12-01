@@ -4,6 +4,7 @@ import sys
 import logging
 import time
 import hashlib
+import getpass
 import Ice
 import IceFlix # pylint:disable=import-error
 from IceFlix import Media # pylint:disable=unused-import,import-error
@@ -28,7 +29,7 @@ class Client(Ice.Application):
     def __init__(self, signalPolicy=0):
         super().__init__()
         self.usuario = "user"
-        self.contrasena = hashlib.sha256("pass".encode())
+        self.contrasena = hashlib.sha256("pass".encode()).hexdigest()
         self.token_autenticacion = None
         self.prx_auth = None
         self.prx_catalog = None
@@ -148,9 +149,9 @@ class Client(Ice.Application):
                 if opcion == 1:
                     self.renombra_peli()
                 elif opcion == 2:
-                    pass #Añadir método para añadir usuarios
+                    self.anadir_usuario()
                 elif opcion == 3:
-                    pass #Añadir método para eliminar usuarios
+                    self.eliminar_usuario()
                 elif opcion == 5:
                     break
 
@@ -159,6 +160,7 @@ class Client(Ice.Application):
 
 
     def eliminar_usuario(self):
+        """Eliminamos un usuario"""
         try:
             self.comprueba_proxy_autenticador()
             usuario = input("Introduzca el nombre de usuario a eliminar\n")
@@ -168,14 +170,16 @@ class Client(Ice.Application):
         except IceFlix.TemporaryUnavailable:
             print("No se puede añadir el usuario ahora mismo, inténtelo más tarden\n")
         except IceFlix.Unauthorized:
-            print("Carece de los permisos para realizar esta acción\n")       
+            print("Carece de los permisos para realizar esta acción\n")
 
 
     def anadir_usuario(self):
+        """Añadimos un usuario"""
         try:
             self.comprueba_proxy_autenticador()
             usuario = input("Introduzca el nombre de usuario\n")
-            contrasena = hashlib.sha256(input("Introduzca la contraseña\n").encode())
+            contrasena = hashlib.sha256(getpass.getpass("Introduzca "
+                                                        "la contraseña\n").encode()).hexdigest()
             self.autenticador.addUser(usuario, contrasena, "1234")
             print("Usuario añadido correctamente\n")
 
@@ -186,6 +190,7 @@ class Client(Ice.Application):
 
 
     def renombra_peli(self):
+        #TRY-EXCEPT
         """Cambiamos el nombre a la película seleccionada"""
         if not self.seleccion:
             print("POr favor seleccione la película que desea renombrar")
@@ -207,6 +212,7 @@ class Client(Ice.Application):
 
 
     def anadir_tags(self):
+        #TRY-EXCEPT
         """Añadimos tags a la película seleccionada"""
         if not self.seleccion:
             print("Por favor seleccione una película antes de añadir tags\n")
@@ -234,6 +240,7 @@ class Client(Ice.Application):
 
 
     def eliminar_tags(self):
+        #TRY-EXCEPT
         """Eliminamos tags de la película seleccionada"""
         if not self.seleccion:
             print("Por favor seleccione una película antes de eliminar tags\n")
@@ -277,6 +284,7 @@ class Client(Ice.Application):
 
 
     def buscar_pelis_tags(self):
+        #TRY-EXCEPT
         """Buscamos en el catálogo películas por tags"""
         try:
             self.comprueba_proxy_catalogo()
@@ -308,6 +316,7 @@ class Client(Ice.Application):
 
 
     def buscar_pelis_nombre(self):
+        #TRY-EXCEPT
         """Buscamos en el catálogo películas por nombre"""
         try:
             self.comprueba_proxy_catalogo()
@@ -389,7 +398,8 @@ class Client(Ice.Application):
             user = self.usuario
             self.comprueba_proxy_autenticador()
             self.usuario = input("Introduzca su nuevo nombre de usuario\n")
-            self.contrasena = hashlib.sha256(input("Introduzca su nueva contraseña\n").encode())
+            self.contrasena = hashlib.sha256(getpass.getpass("Introduzca "
+                                                        "la contraseña\n").encode()).hexdigest()
             self.autenticador.addUser(self.usuario, self.contrasena, "1234")
             self.autenticador.removeUser(user, "1234")
             print("Usuario cambiado correctamente")

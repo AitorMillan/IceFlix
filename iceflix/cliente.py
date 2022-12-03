@@ -5,15 +5,21 @@ import logging
 import time
 import hashlib
 import getpass
+from queue import Queue
+import os.path
 import Ice
 import IceFlix # pylint:disable=import-error
 from IceFlix import Media # pylint:disable=unused-import,import-error
 from IceFlix import MediaInfo # pylint:disable=unused-import,import-error
 
 
+
+
 LOG_FORMAT = '%(asctime)s - %(levelname)-7s - %(module)s:%(funcName)s:%(lineno)d - %(message)s'
 
+COLA = Queue()
 REINTENTOS = 3
+ARCHIVO = None
 
 def setup_logging():
     """Configure the logging."""
@@ -51,6 +57,40 @@ class ManejadorUsuarios():
             print(f"El usuario {usuario} no se encuentra registrado")
 
 
+class FileUploader(IceFlix.FileUploader):
+    """Sirviente que implementa la interfaz File Uploader"""
+    def receive(self, size, current = None): # pylint:disable=unused-argument
+        pass
+    def close(self, current = None): # pylint:disable=unused-argument
+        COLA.put("Hecho")
+
+
+class UploaderApp(Ice.Application):
+    """Clase encargada de hacer de servidor del File Uploader"""
+    def __init__(self, file_service, admin_token):
+        super().__init__()
+        self.servant = FileUploader()
+        self.proxy = None
+        self.adapter = None
+        self.file_service = file_service
+        self.admin_token = admin_token
+
+
+    def run(self,args):
+        """Ejecuta el Uploader"""
+        comm = self.communicator()
+        self.adapter = comm.createObjectAdapter("clientAdapter")
+        self.adapter.activate()
+
+        self.proxy = self.adapter.addWithUUID(self.servant)
+        self.proxy = IceFlix.FileUploaderPrx.uncheckedCast(self.proxy)
+        try:
+            self.file_service.uploadFile(self.proxy,self.admin_token)
+            COLA.get(block=True)
+        except IceFlix.Unauthorized as exc:
+            raise exc
+
+
 class Client(Ice.Application):
     """Clase que implementa al cliente de IceFlix"""
 
@@ -61,8 +101,10 @@ class Client(Ice.Application):
         self.token_autenticacion = None
         self.prx_auth = None
         self.prx_catalog = None
+        self.prx_file = None
         self.principal = None
         self.autenticador = None
+        self.file_service = None
         self.catalogo = None
         self.peliculas = []
         self.seleccion = None
@@ -74,10 +116,14 @@ class Client(Ice.Application):
         veces_reintentado = 0
         setup_logging()
         logging.info("Starting IceFlix client...")
-
+        if len(args) <= 1:
+            print("No ha introducido ningún fichero de configuracón\n"
+                "Puede continuar usando la aplicación con normalidad, pero no"
+                " podrá subir películas como administrador\n")
+            if input("¿Desea continuar? (S/N)\n") == "N":
+                veces_reintentado = 3
         while veces_reintentado != REINTENTOS:
             try:
-
                 prx_main = self.communicator().stringToProxy(args[1])
 
 
@@ -141,8 +187,9 @@ class Client(Ice.Application):
                                    "5. Ver películas que he buscado.\n"
                                    "6. Añadir tags a una película\n"
                                    "7. Eliminar tags de una película\n"
-                                   "8. Abrir menú de aministrador\n"
-                                   "9. Cerrar sesión\n"))
+                                   "8. Descargar una película\n"
+                                   "9. Abrir menú de aministrador\n"
+                                   "10. Cerrar sesión\n"))
 
                 if opcion == 1:
                     self.conseguir_token()
@@ -159,8 +206,10 @@ class Client(Ice.Application):
                 elif opcion == 7:
                     self.eliminar_tags()
                 elif opcion == 8:
-                    self.menu_admin(estado)
+                    self.descargar_pelicula()
                 elif opcion == 9:
+                    self.menu_admin(estado)
+                elif opcion == 10:
                     self.token_autenticacion = None
 
 
@@ -173,18 +222,53 @@ class Client(Ice.Application):
                                    "1. Cambiar el título de la película seleccionada\n"
                                    "2. Añadir usuarios\n"
                                    "3. Eliminar usuarios\n"
-                                   "5. Salir del menú de administrador\n"))
+                                   "4. Eliminar una película\n"
+                                   "5. Subir una película\n"
+                                   "6. Salir del menú de administrador\n"))
                 if opcion == 1:
                     self.renombra_peli()
                 elif opcion == 2:
                     self.anadir_usuario()
                 elif opcion == 3:
                     self.eliminar_usuario()
+                elif opcion == 4:
+                    self.eliminar_pelicula()
                 elif opcion == 5:
+                    self.subir_pelicula()
+                elif opcion == 6:
                     break
 
             except ValueError:
                 print("Por favor, introduzca un valor válido")
+
+
+    def subir_pelicula(self):
+        """Subimos una película al servidor"""
+        ruta = input("Introduzca la ruta ABSOLUTA de la película que desea subir\n")
+        try:
+            if os.path.isfile(ruta) is False:
+                print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
+            else:
+                ARCHIVO = open(ruta,"r",encoding="utf-8")
+                server = UploaderApp(self.file_service,"1234")
+                server.main(sys.argv)
+                ARCHIVO.close()
+                print("El archivo se ha subido correctamente\n")
+        except FileNotFoundError:
+            print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
+
+
+    def descargar_pelicula(self):
+        if not self.seleccion:
+            print("No tiene ninguna película seleccionada.\n"
+                  "Para descargar una, selecciónela primero\n")
+        else:
+            pass
+
+
+    def eliminar_pelicula(self):
+        """El administrador elimina la película seleccionada"""
+        pass
 
 
     def eliminar_usuario(self):

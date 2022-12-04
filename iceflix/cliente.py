@@ -279,7 +279,55 @@ class Client(Ice.Application):
             print("No tiene ninguna película seleccionada.\n"
                   "Para descargar una, selecciónela primero\n")
         else:
-            pass
+            num_reintentos = 0
+            while num_reintentos < REINTENTOS:
+                try:
+                    self.comprueba_proxy_autenticador()
+                    self.prx_file = self.seleccion.provider
+                    self.conexion_file_service()
+                    prx_file_handler = self.file_service.openFile(self.seleccion.mediaId,
+                                                                  self.token_autenticacion)
+                    file_handler = self.conecta_file_handler(prx_file_handler)
+                    archivo = open("../archivos/"+self.seleccion.info.name+".txt", # pylint:disable = consider-using-with
+                                   "a+",encoding="utf-8")
+                    break
+                except IceFlix.WrongMediaId:
+                    print("Hay un error con el identificador de la película, por favor,"
+                          " contacte con la empresa\n")
+                    num_reintentos = 3
+                    break
+                except IceFlix.TemporaryUnavailable:
+                    print("No se ha podido descargar su película, inténtelo más tarde\n")
+                    num_reintentos = 3
+                    break
+                except IceFlix.Unauthorized:
+                    self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+                    num_reintentos += 1
+            if num_reintentos == REINTENTOS:
+                print("No se ha podido establecer la conexion\n")
+                self.token_autenticacion = None
+                return None
+
+            while True:
+                try:
+                    contenido = file_handler.receive(100,self.token_autenticacion).decode()
+                    if contenido == "":
+                        file_handler.close(self.token_autenticacion)
+                        break
+                    archivo.write(contenido)
+                except IceFlix.Unauthorized:
+                    self.autenticador.refreshAuthorization(self.usuario,self.contrasena)
+            archivo.close()
+            print("Su archivo se ha descargado en el direcotio archivos\n")
+
+
+    def conecta_file_handler(self,prx_file_handler):
+        """Conectamos con el file handler"""
+        file_handler = IceFlix.FileHandlerPrx.checkedCast(prx_file_handler)
+
+        if not file_handler:
+            raise IceFlix.TemporaryUnavailable
+        return file_handler
 
 
     def eliminar_pelicula(self):
@@ -649,7 +697,7 @@ class Client(Ice.Application):
             #if prx is not self.prx_file
             #   self.prx_file = prx
             #   self.conexion_file_service()
-            
+
             if not self.prx_file:
                 self.prx_file = self.principal.getFileService()
                 self.conexion_file_service()

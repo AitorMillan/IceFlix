@@ -260,13 +260,17 @@ class Client(Ice.Application):
                 print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
             else:
                 global ARCHIVO_SUBIDA
+                self.comprueba_proxy_catalogo()
                 with open(ruta, "r",encoding="utf-8") as ARCHIVO_SUBIDA:
                     server = UploaderApp(self.file_service,"1234")
                     server.main(sys.argv)
                     ARCHIVO_SUBIDA.close()
                     print("El archivo se ha subido correctamente\n")
-        except FileNotFoundError:
-            print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
+        except IceFlix.Unauthorized:
+            print("Carece de los permisos para realizar esta opción, por favor contacte"
+                  " con el administrador\n")
+        except IceFlix.TemporaryUnavailable:
+            print("No se ha podido subir la película, inténtelo más tarde\n")
 
 
     def descargar_pelicula(self):
@@ -280,8 +284,21 @@ class Client(Ice.Application):
 
     def eliminar_pelicula(self):
         """El administrador elimina la película seleccionada"""
-        print("A")
-
+        if not self.seleccion:
+            print("Por favor, seleccione una película primero\n")
+        else:
+            try:
+                self.prx_file = self.seleccion.provider
+                self.conexion_file_service()
+                self.file_service.removeFile(self.seleccion.mediaId,"1234")
+            except IceFlix.TemporaryUnavailable:
+                print("El servicio se encuentra temporalmente fuera de servicio.\n"
+                      "Por favor, inténtelo de nuevo más tarde\n")
+            except IceFlix.Unauthorized:
+                print("Carece de los permisos para realizar esta acción\n")
+            except IceFlix.WrongMediaId:
+                print("Hay un error con el identificador de la película, por favor,"
+                      " contacte con la empresa\n")
 
     def eliminar_usuario(self):
         """Eliminamos un usuario"""
@@ -625,9 +642,27 @@ class Client(Ice.Application):
             raise exc
 
 
+    def comprueba_proxy_file_service(self):
+        """Comprobamos el proxy del file service"""
+        try:
+            #prx = self.principal.getFileService()
+            #if prx is not self.prx_file
+            #   self.prx_file = prx
+            #   self.conexion_file_service()
+            
+            if not self.prx_file:
+                self.prx_file = self.principal.getFileService()
+                self.conexion_file_service()
+
+        except IceFlix.TemporaryUnavailable as exc:
+            print("El servidor de archivos está temporalmente fuera de servicio"
+                  " inténtelo de nuevo más tarde")
+            raise exc
+
+
 
     def comprueba_proxy_catalogo(self):
-        """Comprobamos si tenemos el proy del autenticador"""
+        """Comprobamos si tenemos el proy del catálogo"""
         try:
             #prx = self.principal.getCatalog()
             #if prx is not self.prx_catalog:
@@ -649,6 +684,14 @@ class Client(Ice.Application):
         self.catalogo = IceFlix.MediaCatalogPrx.checkedCast(self.prx_catalog)
 
         if not self.catalogo:
+            raise IceFlix.TemporaryUnavailable
+
+
+    def conexion_file_service(self):
+        """Creamos una conexión con el file service"""
+        self.file_service = IceFlix.FileServicePrx.checkedCast(self.prx_file)
+
+        if not self.autenticador:
             raise IceFlix.TemporaryUnavailable
 
 

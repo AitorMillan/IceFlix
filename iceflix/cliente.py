@@ -19,7 +19,7 @@ LOG_FORMAT = '%(asctime)s - %(levelname)-7s - %(module)s:%(funcName)s:%(lineno)d
 
 COLA = Queue()
 REINTENTOS = 3
-ARCHIVO = None
+ARCHIVO_SUBIDA = None
 
 def setup_logging():
     """Configure the logging."""
@@ -60,14 +60,18 @@ class ManejadorUsuarios():
 class FileUploader(IceFlix.FileUploader):
     """Sirviente que implementa la interfaz File Uploader"""
     def receive(self, size, current = None): # pylint:disable=unused-argument
-        pass
+        """Enviamos el número de bytes que nos pidan"""
+        global ARCHIVO_SUBIDA
+        return ARCHIVO_SUBIDA.read(size).encode()
     def close(self, current = None): # pylint:disable=unused-argument
+        """Cerramos el envío de datos"""
         COLA.put("Hecho")
 
 
 class UploaderApp(Ice.Application):
     """Clase encargada de hacer de servidor del File Uploader"""
     def __init__(self, file_service, admin_token):
+        """Inicialización de la clase"""
         super().__init__()
         self.servant = FileUploader()
         self.proxy = None
@@ -87,7 +91,13 @@ class UploaderApp(Ice.Application):
         try:
             self.file_service.uploadFile(self.proxy,self.admin_token)
             COLA.get(block=True)
+            comm.destroy()
+            self.adapter.destroy()
+            self.servant.close()
         except IceFlix.Unauthorized as exc:
+            comm.destroy()
+            self.adapter.destroy()
+            self.servant.close()
             raise exc
 
 
@@ -249,16 +259,18 @@ class Client(Ice.Application):
             if os.path.isfile(ruta) is False:
                 print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
             else:
-                ARCHIVO = open(ruta,"r",encoding="utf-8")
-                server = UploaderApp(self.file_service,"1234")
-                server.main(sys.argv)
-                ARCHIVO.close()
-                print("El archivo se ha subido correctamente\n")
+                global ARCHIVO_SUBIDA
+                with open(ruta, "r",encoding="utf-8") as ARCHIVO_SUBIDA:
+                    server = UploaderApp(self.file_service,"1234")
+                    server.main(sys.argv)
+                    ARCHIVO_SUBIDA.close()
+                    print("El archivo se ha subido correctamente\n")
         except FileNotFoundError:
             print("La ruta introducida es errónea, por favor, inténtelo de nuevo\n")
 
 
     def descargar_pelicula(self):
+        """Descargamos la película seleccionada"""
         if not self.seleccion:
             print("No tiene ninguna película seleccionada.\n"
                   "Para descargar una, selecciónela primero\n")
@@ -268,7 +280,7 @@ class Client(Ice.Application):
 
     def eliminar_pelicula(self):
         """El administrador elimina la película seleccionada"""
-        pass
+        print("A")
 
 
     def eliminar_usuario(self):

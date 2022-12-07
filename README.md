@@ -39,3 +39,8 @@ It contains the following files and directories:
   ## Pylint no-members
   
   Mirar issue [#01](https://github.com/AitorMillan/distribuidos_lab/issues/1)
+  
+  # Repositorios funcionales
+  
+  En caso de que el programa no funcione con otros programas, se ha comprobado que la ejecución el cliente funciona perfectamente con los siguientes programas:
+  (Por añadir)

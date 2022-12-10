@@ -69,39 +69,6 @@ class FileUploader(IceFlix.FileUploader):
         COLA.put("Hecho")
 
 
-class UploaderApp(Ice.Application):
-    """Clase encargada de hacer de servidor del File Uploader"""
-    def __init__(self, file_service, admin_token):
-        """Inicialización de la clase"""
-        super().__init__()
-        self.servant = FileUploader()
-        self.proxy = None
-        self.adapter = None
-        self.file_service = file_service
-        self.admin_token = admin_token
-
-
-    def run(self,args):
-        """Ejecuta el Uploader"""
-        comm = self.communicator()
-        self.adapter = comm.createObjectAdapter("clientAdapter")
-        self.adapter.activate()
-
-        self.proxy = self.adapter.addWithUUID(self.servant)
-        self.proxy = IceFlix.FileUploaderPrx.uncheckedCast(self.proxy)
-        try:
-            self.file_service.uploadFile(self.proxy,self.admin_token)
-            COLA.get(block=True)
-            comm.destroy()
-            self.adapter.destroy()
-            self.servant.close()
-        except IceFlix.Unauthorized as exc:
-            comm.destroy()
-            self.adapter.destroy()
-            self.servant.close()
-            raise exc
-
-
 class Client(Ice.Application):
     """Clase que implementa al cliente de IceFlix"""
 
@@ -829,7 +796,3 @@ class Client(Ice.Application):
 
         if not self.autenticador:
             raise IceFlix.TemporaryUnavailable
-
-
-if __name__ == "__main__":
-    sys.exit(Client().main(sys.argv))

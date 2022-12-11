@@ -5,3 +5,8 @@
 __pycache__
 *~
 *.pyc
+
+local
+pyvenv.cfg
+usuarios.txt
+build

@@ -4,23 +4,23 @@
 
 Si quieres ejecutar el programa utilizando el comando python3 debes ejecutar lo siguiente desde la carpeta distribuidos_lab:
 
-**python3 iceflix/cliente.py --Ice.Config=configs/client.config '{proxy del main}'**
+"**python3 iceflix/cliente.py --Ice.Config=configs/client.config '{proxy del main}'**"
 
 ## Usando ./run_client
 
 Para poder ejecutar el programa de esta manera debes de utilizar los siguientes comandos en la carpeta distribuidos_lab:
 
-**python3 -m pip install --upgrade build** (este comando no tiene porqué ser obligatorio, pero en mi caso lo utilicé antes de ejecutar el siguiente comando)
+"**python3 -m pip install --upgrade build**" (este comando no tiene porqué ser obligatorio, pero en mi caso lo utilicé antes de ejecutar el siguiente comando)
 
 Una vez se ha ejecutado el comando anterior se debe de ejecutar el siguiente:
 
-**python -m pip install . **(si no quieres que se cree la carpeta build añade la opción -e)
+"**python -m pip install .**"   (si no quieres que se cree la carpeta build añade la opción -e)
 
-Una vez hemos hecho hesto podemos ejecutar el programa mediante **./run_client {proxy del main}**
+Una vez hemos hecho hesto podemos ejecutar el programa mediante "**./run_client {proxy del main}**"
 
-Otra opción es mediante el comando **iceflix {proxy del main}**
+Otra opción es mediante el comando "**iceflix {proxy del main}**"
 
-Si quieres desinstalar el programa puedes hacerlo poniendo **pip uninstall IceFlix-Client**
+Si quieres desinstalar el programa puedes hacerlo poniendo "**pip uninstall IceFlix-Client**"
   
   # Decisiones de diseño
   

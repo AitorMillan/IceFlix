@@ -84,6 +84,9 @@ if '_t_Bytes' not in _M_IceFlix.__dict__:
 if '_t_StringList' not in _M_IceFlix.__dict__:
     _M_IceFlix._t_StringList = IcePy.defineSequence('::IceFlix::StringList', (), IcePy._t_string)
 
+if '_t_DictStrToStr' not in _M_IceFlix.__dict__:
+    _M_IceFlix._t_DictStrToStr = IcePy.defineDictionary('::IceFlix::DictStrToStr', (), IcePy._t_string, IcePy._t_string)
+
 _M_IceFlix._t_FileHandler = IcePy.defineValue('::IceFlix::FileHandler', Ice.Value, -1, (), False, True, None, ())
 
 if 'FileHandlerPrx' not in _M_IceFlix.__dict__:
@@ -337,6 +340,69 @@ if 'FileServicePrx' not in _M_IceFlix.__dict__:
     _M_IceFlix.FileService = FileService
     del FileService
 
+_M_IceFlix._t_FileAvailabilityAnnounce = IcePy.defineValue('::IceFlix::FileAvailabilityAnnounce', Ice.Value, -1, (), False, True, None, ())
+
+if 'FileAvailabilityAnnouncePrx' not in _M_IceFlix.__dict__:
+    _M_IceFlix.FileAvailabilityAnnouncePrx = Ice.createTempClass()
+    class FileAvailabilityAnnouncePrx(Ice.ObjectPrx):
+
+        def announceFiles(self, mediaIds, serviceId, context=None):
+            return _M_IceFlix.FileAvailabilityAnnounce._op_announceFiles.invoke(self, ((mediaIds, serviceId), context))
+
+        def announceFilesAsync(self, mediaIds, serviceId, context=None):
+            return _M_IceFlix.FileAvailabilityAnnounce._op_announceFiles.invokeAsync(self, ((mediaIds, serviceId), context))
+
+        def begin_announceFiles(self, mediaIds, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.FileAvailabilityAnnounce._op_announceFiles.begin(self, ((mediaIds, serviceId), _response, _ex, _sent, context))
+
+        def end_announceFiles(self, _r):
+            return _M_IceFlix.FileAvailabilityAnnounce._op_announceFiles.end(self, _r)
+
+        @staticmethod
+        def checkedCast(proxy, facetOrContext=None, context=None):
+            return _M_IceFlix.FileAvailabilityAnnouncePrx.ice_checkedCast(proxy, '::IceFlix::FileAvailabilityAnnounce', facetOrContext, context)
+
+        @staticmethod
+        def uncheckedCast(proxy, facet=None):
+            return _M_IceFlix.FileAvailabilityAnnouncePrx.ice_uncheckedCast(proxy, facet)
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::FileAvailabilityAnnounce'
+    _M_IceFlix._t_FileAvailabilityAnnouncePrx = IcePy.defineProxy('::IceFlix::FileAvailabilityAnnounce', FileAvailabilityAnnouncePrx)
+
+    _M_IceFlix.FileAvailabilityAnnouncePrx = FileAvailabilityAnnouncePrx
+    del FileAvailabilityAnnouncePrx
+
+    _M_IceFlix.FileAvailabilityAnnounce = Ice.createTempClass()
+    class FileAvailabilityAnnounce(Ice.Object):
+
+        def ice_ids(self, current=None):
+            return ('::Ice::Object', '::IceFlix::FileAvailabilityAnnounce')
+
+        def ice_id(self, current=None):
+            return '::IceFlix::FileAvailabilityAnnounce'
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::FileAvailabilityAnnounce'
+
+        def announceFiles(self, mediaIds, serviceId, current=None):
+            raise NotImplementedError("servant method 'announceFiles' not implemented")
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_IceFlix._t_FileAvailabilityAnnounceDisp)
+
+        __repr__ = __str__
+
+    _M_IceFlix._t_FileAvailabilityAnnounceDisp = IcePy.defineClass('::IceFlix::FileAvailabilityAnnounce', FileAvailabilityAnnounce, (), None, ())
+    FileAvailabilityAnnounce._ice_type = _M_IceFlix._t_FileAvailabilityAnnounceDisp
+
+    FileAvailabilityAnnounce._op_announceFiles = IcePy.Operation('announceFiles', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+
+    _M_IceFlix.FileAvailabilityAnnounce = FileAvailabilityAnnounce
+    del FileAvailabilityAnnounce
+
 if 'MediaInfo' not in _M_IceFlix.__dict__:
     _M_IceFlix.MediaInfo = Ice.createTempClass()
     class MediaInfo(object):
@@ -515,30 +581,6 @@ if 'MediaCatalogPrx' not in _M_IceFlix.__dict__:
         def end_getTilesByTags(self, _r):
             return _M_IceFlix.MediaCatalog._op_getTilesByTags.end(self, _r)
 
-        def newMedia(self, mediaId, provider, context=None):
-            return _M_IceFlix.MediaCatalog._op_newMedia.invoke(self, ((mediaId, provider), context))
-
-        def newMediaAsync(self, mediaId, provider, context=None):
-            return _M_IceFlix.MediaCatalog._op_newMedia.invokeAsync(self, ((mediaId, provider), context))
-
-        def begin_newMedia(self, mediaId, provider, _response=None, _ex=None, _sent=None, context=None):
-            return _M_IceFlix.MediaCatalog._op_newMedia.begin(self, ((mediaId, provider), _response, _ex, _sent, context))
-
-        def end_newMedia(self, _r):
-            return _M_IceFlix.MediaCatalog._op_newMedia.end(self, _r)
-
-        def removeMedia(self, mediaId, provider, context=None):
-            return _M_IceFlix.MediaCatalog._op_removeMedia.invoke(self, ((mediaId, provider), context))
-
-        def removeMediaAsync(self, mediaId, provider, context=None):
-            return _M_IceFlix.MediaCatalog._op_removeMedia.invokeAsync(self, ((mediaId, provider), context))
-
-        def begin_removeMedia(self, mediaId, provider, _response=None, _ex=None, _sent=None, context=None):
-            return _M_IceFlix.MediaCatalog._op_removeMedia.begin(self, ((mediaId, provider), _response, _ex, _sent, context))
-
-        def end_removeMedia(self, _r):
-            return _M_IceFlix.MediaCatalog._op_removeMedia.end(self, _r)
-
         def renameTile(self, mediaId, name, adminToken, context=None):
             return _M_IceFlix.MediaCatalog._op_renameTile.invoke(self, ((mediaId, name, adminToken), context))
 
@@ -574,6 +616,18 @@ if 'MediaCatalogPrx' not in _M_IceFlix.__dict__:
 
         def end_removeTags(self, _r):
             return _M_IceFlix.MediaCatalog._op_removeTags.end(self, _r)
+
+        def getAllDeltas(self, context=None):
+            return _M_IceFlix.MediaCatalog._op_getAllDeltas.invoke(self, ((), context))
+
+        def getAllDeltasAsync(self, context=None):
+            return _M_IceFlix.MediaCatalog._op_getAllDeltas.invokeAsync(self, ((), context))
+
+        def begin_getAllDeltas(self, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.MediaCatalog._op_getAllDeltas.begin(self, ((), _response, _ex, _sent, context))
+
+        def end_getAllDeltas(self, _r):
+            return _M_IceFlix.MediaCatalog._op_getAllDeltas.end(self, _r)
 
         @staticmethod
         def checkedCast(proxy, facetOrContext=None, context=None):
@@ -613,12 +667,6 @@ if 'MediaCatalogPrx' not in _M_IceFlix.__dict__:
         def getTilesByTags(self, tags, includeAllTags, userToken, current=None):
             raise NotImplementedError("servant method 'getTilesByTags' not implemented")
 
-        def newMedia(self, mediaId, provider, current=None):
-            raise NotImplementedError("servant method 'newMedia' not implemented")
-
-        def removeMedia(self, mediaId, provider, current=None):
-            raise NotImplementedError("servant method 'removeMedia' not implemented")
-
         def renameTile(self, mediaId, name, adminToken, current=None):
             raise NotImplementedError("servant method 'renameTile' not implemented")
 
@@ -627,6 +675,9 @@ if 'MediaCatalogPrx' not in _M_IceFlix.__dict__:
 
         def removeTags(self, mediaId, tags, userToken, current=None):
             raise NotImplementedError("servant method 'removeTags' not implemented")
+
+        def getAllDeltas(self, current=None):
+            raise NotImplementedError("servant method 'getAllDeltas' not implemented")
 
         def __str__(self):
             return IcePy.stringify(self, _M_IceFlix._t_MediaCatalogDisp)
@@ -639,14 +690,138 @@ if 'MediaCatalogPrx' not in _M_IceFlix.__dict__:
     MediaCatalog._op_getTile = IcePy.Operation('getTile', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), ((), _M_IceFlix._t_Media, False, 0), (_M_IceFlix._t_WrongMediaId, _M_IceFlix._t_TemporaryUnavailable, _M_IceFlix._t_Unauthorized))
     MediaCatalog._op_getTilesByName = IcePy.Operation('getTilesByName', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_bool, False, 0)), (), ((), _M_IceFlix._t_StringList, False, 0), ())
     MediaCatalog._op_getTilesByTags = IcePy.Operation('getTilesByTags', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_bool, False, 0), ((), IcePy._t_string, False, 0)), (), ((), _M_IceFlix._t_StringList, False, 0), (_M_IceFlix._t_Unauthorized,))
-    MediaCatalog._op_newMedia = IcePy.Operation('newMedia', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_FileServicePrx, False, 0)), (), None, ())
-    MediaCatalog._op_removeMedia = IcePy.Operation('removeMedia', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_FileServicePrx, False, 0)), (), None, ())
     MediaCatalog._op_renameTile = IcePy.Operation('renameTile', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, (_M_IceFlix._t_Unauthorized, _M_IceFlix._t_WrongMediaId))
     MediaCatalog._op_addTags = IcePy.Operation('addTags', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_string, False, 0)), (), None, (_M_IceFlix._t_Unauthorized, _M_IceFlix._t_WrongMediaId))
     MediaCatalog._op_removeTags = IcePy.Operation('removeTags', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_string, False, 0)), (), None, (_M_IceFlix._t_Unauthorized, _M_IceFlix._t_WrongMediaId))
+    MediaCatalog._op_getAllDeltas = IcePy.Operation('getAllDeltas', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), None, ())
 
     _M_IceFlix.MediaCatalog = MediaCatalog
     del MediaCatalog
+
+_M_IceFlix._t_CatalogUpdate = IcePy.defineValue('::IceFlix::CatalogUpdate', Ice.Value, -1, (), False, True, None, ())
+
+if 'CatalogUpdatePrx' not in _M_IceFlix.__dict__:
+    _M_IceFlix.CatalogUpdatePrx = Ice.createTempClass()
+    class CatalogUpdatePrx(Ice.ObjectPrx):
+
+        def renameTile(self, mediaId, newName, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_renameTile.invoke(self, ((mediaId, newName, serviceId), context))
+
+        def renameTileAsync(self, mediaId, newName, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_renameTile.invokeAsync(self, ((mediaId, newName, serviceId), context))
+
+        def begin_renameTile(self, mediaId, newName, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.CatalogUpdate._op_renameTile.begin(self, ((mediaId, newName, serviceId), _response, _ex, _sent, context))
+
+        def end_renameTile(self, _r):
+            return _M_IceFlix.CatalogUpdate._op_renameTile.end(self, _r)
+
+        def addTags(self, mediaId, user, tags, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_addTags.invoke(self, ((mediaId, user, tags, serviceId), context))
+
+        def addTagsAsync(self, mediaId, user, tags, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_addTags.invokeAsync(self, ((mediaId, user, tags, serviceId), context))
+
+        def begin_addTags(self, mediaId, user, tags, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.CatalogUpdate._op_addTags.begin(self, ((mediaId, user, tags, serviceId), _response, _ex, _sent, context))
+
+        def end_addTags(self, _r):
+            return _M_IceFlix.CatalogUpdate._op_addTags.end(self, _r)
+
+        def removeTags(self, mediaId, user, tags, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_removeTags.invoke(self, ((mediaId, user, tags, serviceId), context))
+
+        def removeTagsAsync(self, mediaId, user, tags, serviceId, context=None):
+            return _M_IceFlix.CatalogUpdate._op_removeTags.invokeAsync(self, ((mediaId, user, tags, serviceId), context))
+
+        def begin_removeTags(self, mediaId, user, tags, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.CatalogUpdate._op_removeTags.begin(self, ((mediaId, user, tags, serviceId), _response, _ex, _sent, context))
+
+        def end_removeTags(self, _r):
+            return _M_IceFlix.CatalogUpdate._op_removeTags.end(self, _r)
+
+        @staticmethod
+        def checkedCast(proxy, facetOrContext=None, context=None):
+            return _M_IceFlix.CatalogUpdatePrx.ice_checkedCast(proxy, '::IceFlix::CatalogUpdate', facetOrContext, context)
+
+        @staticmethod
+        def uncheckedCast(proxy, facet=None):
+            return _M_IceFlix.CatalogUpdatePrx.ice_uncheckedCast(proxy, facet)
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::CatalogUpdate'
+    _M_IceFlix._t_CatalogUpdatePrx = IcePy.defineProxy('::IceFlix::CatalogUpdate', CatalogUpdatePrx)
+
+    _M_IceFlix.CatalogUpdatePrx = CatalogUpdatePrx
+    del CatalogUpdatePrx
+
+    _M_IceFlix.CatalogUpdate = Ice.createTempClass()
+    class CatalogUpdate(Ice.Object):
+
+        def ice_ids(self, current=None):
+            return ('::Ice::Object', '::IceFlix::CatalogUpdate')
+
+        def ice_id(self, current=None):
+            return '::IceFlix::CatalogUpdate'
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::CatalogUpdate'
+
+        def renameTile(self, mediaId, newName, serviceId, current=None):
+            raise NotImplementedError("servant method 'renameTile' not implemented")
+
+        def addTags(self, mediaId, user, tags, serviceId, current=None):
+            raise NotImplementedError("servant method 'addTags' not implemented")
+
+        def removeTags(self, mediaId, user, tags, serviceId, current=None):
+            raise NotImplementedError("servant method 'removeTags' not implemented")
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_IceFlix._t_CatalogUpdateDisp)
+
+        __repr__ = __str__
+
+    _M_IceFlix._t_CatalogUpdateDisp = IcePy.defineClass('::IceFlix::CatalogUpdate', CatalogUpdate, (), None, ())
+    CatalogUpdate._ice_type = _M_IceFlix._t_CatalogUpdateDisp
+
+    CatalogUpdate._op_renameTile = IcePy.Operation('renameTile', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+    CatalogUpdate._op_addTags = IcePy.Operation('addTags', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+    CatalogUpdate._op_removeTags = IcePy.Operation('removeTags', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), _M_IceFlix._t_StringList, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+
+    _M_IceFlix.CatalogUpdate = CatalogUpdate
+    del CatalogUpdate
+
+if 'AuthenticatorData' not in _M_IceFlix.__dict__:
+    _M_IceFlix.AuthenticatorData = Ice.createTempClass()
+    class AuthenticatorData(Ice.Value):
+        def __init__(self, adminToken='', currentUsers=None, activeTokens=None):
+            self.adminToken = adminToken
+            self.currentUsers = currentUsers
+            self.activeTokens = activeTokens
+
+        def ice_id(self):
+            return '::IceFlix::AuthenticatorData'
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::AuthenticatorData'
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_IceFlix._t_AuthenticatorData)
+
+        __repr__ = __str__
+
+    _M_IceFlix._t_AuthenticatorData = IcePy.defineValue('::IceFlix::AuthenticatorData', AuthenticatorData, -1, (), False, False, None, (
+        ('adminToken', (), IcePy._t_string, False, 0),
+        ('currentUsers', (), _M_IceFlix._t_DictStrToStr, False, 0),
+        ('activeTokens', (), _M_IceFlix._t_DictStrToStr, False, 0)
+    ))
+    AuthenticatorData._ice_type = _M_IceFlix._t_AuthenticatorData
+
+    _M_IceFlix.AuthenticatorData = AuthenticatorData
+    del AuthenticatorData
 
 _M_IceFlix._t_Authenticator = IcePy.defineValue('::IceFlix::Authenticator', Ice.Value, -1, (), False, True, None, ())
 
@@ -726,6 +901,18 @@ if 'AuthenticatorPrx' not in _M_IceFlix.__dict__:
         def end_removeUser(self, _r):
             return _M_IceFlix.Authenticator._op_removeUser.end(self, _r)
 
+        def bulkUpdate(self, context=None):
+            return _M_IceFlix.Authenticator._op_bulkUpdate.invoke(self, ((), context))
+
+        def bulkUpdateAsync(self, context=None):
+            return _M_IceFlix.Authenticator._op_bulkUpdate.invokeAsync(self, ((), context))
+
+        def begin_bulkUpdate(self, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.Authenticator._op_bulkUpdate.begin(self, ((), _response, _ex, _sent, context))
+
+        def end_bulkUpdate(self, _r):
+            return _M_IceFlix.Authenticator._op_bulkUpdate.end(self, _r)
+
         @staticmethod
         def checkedCast(proxy, facetOrContext=None, context=None):
             return _M_IceFlix.AuthenticatorPrx.ice_checkedCast(proxy, '::IceFlix::Authenticator', facetOrContext, context)
@@ -773,6 +960,9 @@ if 'AuthenticatorPrx' not in _M_IceFlix.__dict__:
         def removeUser(self, user, adminToken, current=None):
             raise NotImplementedError("servant method 'removeUser' not implemented")
 
+        def bulkUpdate(self, current=None):
+            raise NotImplementedError("servant method 'bulkUpdate' not implemented")
+
         def __str__(self):
             return IcePy.stringify(self, _M_IceFlix._t_AuthenticatorDisp)
 
@@ -787,9 +977,121 @@ if 'AuthenticatorPrx' not in _M_IceFlix.__dict__:
     Authenticator._op_isAdmin = IcePy.Operation('isAdmin', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_bool, False, 0), ())
     Authenticator._op_addUser = IcePy.Operation('addUser', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, (_M_IceFlix._t_Unauthorized, _M_IceFlix._t_TemporaryUnavailable))
     Authenticator._op_removeUser = IcePy.Operation('removeUser', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, (_M_IceFlix._t_Unauthorized, _M_IceFlix._t_TemporaryUnavailable))
+    Authenticator._op_bulkUpdate = IcePy.Operation('bulkUpdate', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), _M_IceFlix._t_AuthenticatorData, False, 0), ())
 
     _M_IceFlix.Authenticator = Authenticator
     del Authenticator
+
+_M_IceFlix._t_UserUpdate = IcePy.defineValue('::IceFlix::UserUpdate', Ice.Value, -1, (), False, True, None, ())
+
+if 'UserUpdatePrx' not in _M_IceFlix.__dict__:
+    _M_IceFlix.UserUpdatePrx = Ice.createTempClass()
+    class UserUpdatePrx(Ice.ObjectPrx):
+
+        def newToken(self, user, token, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_newToken.invoke(self, ((user, token, serviceId), context))
+
+        def newTokenAsync(self, user, token, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_newToken.invokeAsync(self, ((user, token, serviceId), context))
+
+        def begin_newToken(self, user, token, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.UserUpdate._op_newToken.begin(self, ((user, token, serviceId), _response, _ex, _sent, context))
+
+        def end_newToken(self, _r):
+            return _M_IceFlix.UserUpdate._op_newToken.end(self, _r)
+
+        def revokeToken(self, token, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_revokeToken.invoke(self, ((token, serviceId), context))
+
+        def revokeTokenAsync(self, token, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_revokeToken.invokeAsync(self, ((token, serviceId), context))
+
+        def begin_revokeToken(self, token, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.UserUpdate._op_revokeToken.begin(self, ((token, serviceId), _response, _ex, _sent, context))
+
+        def end_revokeToken(self, _r):
+            return _M_IceFlix.UserUpdate._op_revokeToken.end(self, _r)
+
+        def newUser(self, user, passwordHash, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_newUser.invoke(self, ((user, passwordHash, serviceId), context))
+
+        def newUserAsync(self, user, passwordHash, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_newUser.invokeAsync(self, ((user, passwordHash, serviceId), context))
+
+        def begin_newUser(self, user, passwordHash, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.UserUpdate._op_newUser.begin(self, ((user, passwordHash, serviceId), _response, _ex, _sent, context))
+
+        def end_newUser(self, _r):
+            return _M_IceFlix.UserUpdate._op_newUser.end(self, _r)
+
+        def removeUser(self, user, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_removeUser.invoke(self, ((user, serviceId), context))
+
+        def removeUserAsync(self, user, serviceId, context=None):
+            return _M_IceFlix.UserUpdate._op_removeUser.invokeAsync(self, ((user, serviceId), context))
+
+        def begin_removeUser(self, user, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.UserUpdate._op_removeUser.begin(self, ((user, serviceId), _response, _ex, _sent, context))
+
+        def end_removeUser(self, _r):
+            return _M_IceFlix.UserUpdate._op_removeUser.end(self, _r)
+
+        @staticmethod
+        def checkedCast(proxy, facetOrContext=None, context=None):
+            return _M_IceFlix.UserUpdatePrx.ice_checkedCast(proxy, '::IceFlix::UserUpdate', facetOrContext, context)
+
+        @staticmethod
+        def uncheckedCast(proxy, facet=None):
+            return _M_IceFlix.UserUpdatePrx.ice_uncheckedCast(proxy, facet)
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::UserUpdate'
+    _M_IceFlix._t_UserUpdatePrx = IcePy.defineProxy('::IceFlix::UserUpdate', UserUpdatePrx)
+
+    _M_IceFlix.UserUpdatePrx = UserUpdatePrx
+    del UserUpdatePrx
+
+    _M_IceFlix.UserUpdate = Ice.createTempClass()
+    class UserUpdate(Ice.Object):
+
+        def ice_ids(self, current=None):
+            return ('::Ice::Object', '::IceFlix::UserUpdate')
+
+        def ice_id(self, current=None):
+            return '::IceFlix::UserUpdate'
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::UserUpdate'
+
+        def newToken(self, user, token, serviceId, current=None):
+            raise NotImplementedError("servant method 'newToken' not implemented")
+
+        def revokeToken(self, token, serviceId, current=None):
+            raise NotImplementedError("servant method 'revokeToken' not implemented")
+
+        def newUser(self, user, passwordHash, serviceId, current=None):
+            raise NotImplementedError("servant method 'newUser' not implemented")
+
+        def removeUser(self, user, serviceId, current=None):
+            raise NotImplementedError("servant method 'removeUser' not implemented")
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_IceFlix._t_UserUpdateDisp)
+
+        __repr__ = __str__
+
+    _M_IceFlix._t_UserUpdateDisp = IcePy.defineClass('::IceFlix::UserUpdate', UserUpdate, (), None, ())
+    UserUpdate._ice_type = _M_IceFlix._t_UserUpdateDisp
+
+    UserUpdate._op_newToken = IcePy.Operation('newToken', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+    UserUpdate._op_revokeToken = IcePy.Operation('revokeToken', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+    UserUpdate._op_newUser = IcePy.Operation('newUser', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+    UserUpdate._op_removeUser = IcePy.Operation('removeUser', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+
+    _M_IceFlix.UserUpdate = UserUpdate
+    del UserUpdate
 
 _M_IceFlix._t_Main = IcePy.defineValue('::IceFlix::Main', Ice.Value, -1, (), False, True, None, ())
 
@@ -833,30 +1135,6 @@ if 'MainPrx' not in _M_IceFlix.__dict__:
         def end_getFileService(self, _r):
             return _M_IceFlix.Main._op_getFileService.end(self, _r)
 
-        def newService(self, service, serviceId, context=None):
-            return _M_IceFlix.Main._op_newService.invoke(self, ((service, serviceId), context))
-
-        def newServiceAsync(self, service, serviceId, context=None):
-            return _M_IceFlix.Main._op_newService.invokeAsync(self, ((service, serviceId), context))
-
-        def begin_newService(self, service, serviceId, _response=None, _ex=None, _sent=None, context=None):
-            return _M_IceFlix.Main._op_newService.begin(self, ((service, serviceId), _response, _ex, _sent, context))
-
-        def end_newService(self, _r):
-            return _M_IceFlix.Main._op_newService.end(self, _r)
-
-        def announce(self, service, serviceId, context=None):
-            return _M_IceFlix.Main._op_announce.invoke(self, ((service, serviceId), context))
-
-        def announceAsync(self, service, serviceId, context=None):
-            return _M_IceFlix.Main._op_announce.invokeAsync(self, ((service, serviceId), context))
-
-        def begin_announce(self, service, serviceId, _response=None, _ex=None, _sent=None, context=None):
-            return _M_IceFlix.Main._op_announce.begin(self, ((service, serviceId), _response, _ex, _sent, context))
-
-        def end_announce(self, _r):
-            return _M_IceFlix.Main._op_announce.end(self, _r)
-
         @staticmethod
         def checkedCast(proxy, facetOrContext=None, context=None):
             return _M_IceFlix.MainPrx.ice_checkedCast(proxy, '::IceFlix::Main', facetOrContext, context)
@@ -895,12 +1173,6 @@ if 'MainPrx' not in _M_IceFlix.__dict__:
         def getFileService(self, current=None):
             raise NotImplementedError("servant method 'getFileService' not implemented")
 
-        def newService(self, service, serviceId, current=None):
-            raise NotImplementedError("servant method 'newService' not implemented")
-
-        def announce(self, service, serviceId, current=None):
-            raise NotImplementedError("servant method 'announce' not implemented")
-
         def __str__(self):
             return IcePy.stringify(self, _M_IceFlix._t_MainDisp)
 
@@ -912,10 +1184,71 @@ if 'MainPrx' not in _M_IceFlix.__dict__:
     Main._op_getAuthenticator = IcePy.Operation('getAuthenticator', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), _M_IceFlix._t_AuthenticatorPrx, False, 0), (_M_IceFlix._t_TemporaryUnavailable,))
     Main._op_getCatalog = IcePy.Operation('getCatalog', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), _M_IceFlix._t_MediaCatalogPrx, False, 0), (_M_IceFlix._t_TemporaryUnavailable,))
     Main._op_getFileService = IcePy.Operation('getFileService', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), _M_IceFlix._t_FileServicePrx, False, 0), (_M_IceFlix._t_TemporaryUnavailable,))
-    Main._op_newService = IcePy.Operation('newService', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_ObjectPrx, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
-    Main._op_announce = IcePy.Operation('announce', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_ObjectPrx, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
 
     _M_IceFlix.Main = Main
     del Main
+
+_M_IceFlix._t_Announcement = IcePy.defineValue('::IceFlix::Announcement', Ice.Value, -1, (), False, True, None, ())
+
+if 'AnnouncementPrx' not in _M_IceFlix.__dict__:
+    _M_IceFlix.AnnouncementPrx = Ice.createTempClass()
+    class AnnouncementPrx(Ice.ObjectPrx):
+
+        def announce(self, service, serviceId, context=None):
+            return _M_IceFlix.Announcement._op_announce.invoke(self, ((service, serviceId), context))
+
+        def announceAsync(self, service, serviceId, context=None):
+            return _M_IceFlix.Announcement._op_announce.invokeAsync(self, ((service, serviceId), context))
+
+        def begin_announce(self, service, serviceId, _response=None, _ex=None, _sent=None, context=None):
+            return _M_IceFlix.Announcement._op_announce.begin(self, ((service, serviceId), _response, _ex, _sent, context))
+
+        def end_announce(self, _r):
+            return _M_IceFlix.Announcement._op_announce.end(self, _r)
+
+        @staticmethod
+        def checkedCast(proxy, facetOrContext=None, context=None):
+            return _M_IceFlix.AnnouncementPrx.ice_checkedCast(proxy, '::IceFlix::Announcement', facetOrContext, context)
+
+        @staticmethod
+        def uncheckedCast(proxy, facet=None):
+            return _M_IceFlix.AnnouncementPrx.ice_uncheckedCast(proxy, facet)
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::Announcement'
+    _M_IceFlix._t_AnnouncementPrx = IcePy.defineProxy('::IceFlix::Announcement', AnnouncementPrx)
+
+    _M_IceFlix.AnnouncementPrx = AnnouncementPrx
+    del AnnouncementPrx
+
+    _M_IceFlix.Announcement = Ice.createTempClass()
+    class Announcement(Ice.Object):
+
+        def ice_ids(self, current=None):
+            return ('::Ice::Object', '::IceFlix::Announcement')
+
+        def ice_id(self, current=None):
+            return '::IceFlix::Announcement'
+
+        @staticmethod
+        def ice_staticId():
+            return '::IceFlix::Announcement'
+
+        def announce(self, service, serviceId, current=None):
+            raise NotImplementedError("servant method 'announce' not implemented")
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_IceFlix._t_AnnouncementDisp)
+
+        __repr__ = __str__
+
+    _M_IceFlix._t_AnnouncementDisp = IcePy.defineClass('::IceFlix::Announcement', Announcement, (), None, ())
+    Announcement._ice_type = _M_IceFlix._t_AnnouncementDisp
+
+    Announcement._op_announce = IcePy.Operation('announce', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_ObjectPrx, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
+
+    _M_IceFlix.Announcement = Announcement
+    del Announcement
 
 # End of module IceFlix

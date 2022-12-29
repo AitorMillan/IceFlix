@@ -8,6 +8,7 @@ import getpass
 from queue import Queue
 import os.path
 import Ice
+import IceStorm
 import IceFlix # pylint:disable=import-error
 from IceFlix import Media # pylint:disable=unused-import,import-error
 from IceFlix import MediaInfo # pylint:disable=unused-import,import-error
@@ -73,6 +74,17 @@ class ManejadorUsuarios():
             raise exc
 
 
+class AnnouncementI(IceFlix.Announcement):
+    """Sirviente que implementa la interfaz Announcement"""
+    def announce(self, service, serviceId, current = None): # pylint:disable=unused-argument
+        if service.ice.isA("::IceFlix::Main"):
+            proxy = IceFlix.MainPrx.uncheckedCast(service)
+            if proxy is None:
+                COLA.put("Error")
+            else:
+                COLA.put(proxy)
+
+
 class FileUploader(IceFlix.FileUploader):
     """Sirviente que implementa la interfaz File Uploader"""
     def receive(self, size, current = None): # pylint:disable=unused-argument
@@ -114,19 +126,35 @@ class Client(Ice.Application):
         logging.info("Starting IceFlix client...")
         while veces_reintentado != REINTENTOS:
             try:
+                topic_mg_proxy = self.communicator().stringToProxy("IceStorm/TopicManager:tcp -p 10000")
+                topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
 
-                prx_main = self.communicator().stringToProxy(args[1])
+                comm = self.communicator()
+                servant = AnnouncementI()
+                self.adapter = comm.createObjectAdapter("clientAdapter")
+                self.adapter.activate()
+                serv_prx = self.adapter.addWithUUID(servant)
+
+                topic_anunciamiento = topic_manager.retrieve("Announcements")
+                topic_anunciamiento.subscribeAndGetPublisher({},serv_prx)
+                print("Buscando servidores Main. Por favor espere...")
+                msg = COLA.get(block=True)
+                if msg == "Error":
+                    raise IceFlix.TemporaryUnavailable
+                else: 
+                    self.principal = msg
+                    topic_anunciamiento.unsuscribe(serv_prx)
+                    self.adapter.remove(serv_prx.ice_getIdentity())
 
                 propiedades = self.communicator().getProperties()
                 self.admin = propiedades.getProperty("AdminToken")
 
-                self.principal = IceFlix.MainPrx.checkedCast(prx_main)
-
-                if not self.principal:
-                    raise IceFlix.TemporaryUnavailable
                 break
+            except IceStorm.NoSuchTopic:
+                print("No se ha podido conseguir el topic. Reintentando")
+                time.sleep(5)
             except IceFlix.TemporaryUnavailable:
-                print("Servicio no disponible. Reintentando...")
+                print("No se ha podido conseguir el topic manager. Reintentando")
                 time.sleep(5)
                 veces_reintentado += 1
                 #Consultar issues para el tema 01 #Pylint error no-members

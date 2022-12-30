@@ -74,9 +74,9 @@ class ManejadorUsuarios():
             raise exc
 
 
-class FileAvailabilityAnnounceI(IceFlix.FileAvailabilityAnnounce):
+class FileAvailabilityAnnounceI(IceFlix.FileAvailabilityAnnounce): # pylint:disable=too-few-public-methods
     """Sirviente que implementa la interfaz File Availability Announce"""
-    def announceFiles(media_ids, service_id, current = None): # pylint:disable=unused-argument
+    def announceFiles(self, media_ids, service_id, current = None): # pylint:disable=unused-argument
         """Mostramos los mensajes announceFiles"""
         print(f"El servicio con ID {service_id}, ha anunciado que "
               "posee los siguientes media/s id/s\n")
@@ -92,7 +92,7 @@ class CatalogUpdateI(IceFlix.CatalogUpdate):
               f"ID del servicio al que se ha hecho la llamada: {service_id}\n")
 
 
-    def addTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument
+    def addTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument, too-many-arguments
         """Mostramos los mensajes addTags"""
         print(f"El usuario {user} ha añadido la/s siguiente/s tag/s\n")
         for etiqueta in tags:
@@ -101,13 +101,13 @@ class CatalogUpdateI(IceFlix.CatalogUpdate):
               f"ID del catálogo al que se ha hecho la llamada: {service_id}\n")
 
 
-    def removeTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument
+    def removeTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument, too-many-arguments
         """Mostramos los mensajes removeTags"""
         print(f"El usuario {user} ha eliminado la/s siguiente/s tag/s\n")
         for etiqueta in tags:
             print(f"-{etiqueta}\n")
         print(f"De la siguiente película: {media_id}\n"
-              f"ID del catálogo al que se ha hecho la llamada: {service_id}\n")   
+              f"ID del catálogo al que se ha hecho la llamada: {service_id}\n")
 
 class UserUpdateI(IceFlix.UserUpdate):
     """Sirviente que implementa la interfaz User Update"""
@@ -382,6 +382,7 @@ class Client(Ice.Application):
 
 
     def monitorizar_announcements(self):
+        """Monitorizamos el canal announcements"""
         try:
             topic_mg_proxy = self.communicator().stringToProxy(
                     "IceStorm/TopicManager:tcp -p 10000")
@@ -406,6 +407,7 @@ class Client(Ice.Application):
 
 
     def monitorizar_file_updates(self):
+        """Monitorizamos el canal file availability announces"""
         try:
             topic_mg_proxy = self.communicator().stringToProxy(
                     "IceStorm/TopicManager:tcp -p 10000")
@@ -430,6 +432,7 @@ class Client(Ice.Application):
 
 
     def monitorizar_catalog_updates(self):
+        """Monitorizamos el canal catalog updates"""
         try:
             topic_mg_proxy = self.communicator().stringToProxy(
                     "IceStorm/TopicManager:tcp -p 10000")
@@ -454,6 +457,7 @@ class Client(Ice.Application):
 
 
     def monitorizar_user_updates(self):
+        """Monitorizamos el canal user updates"""
         try:
             topic_mg_proxy = self.communicator().stringToProxy(
                     "IceStorm/TopicManager:tcp -p 10000")

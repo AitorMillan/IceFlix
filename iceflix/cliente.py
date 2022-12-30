@@ -140,13 +140,13 @@ class Client(Ice.Application):
 
                 topic_anunciamiento = topic_manager.retrieve("Announcements")
                 topic_anunciamiento.subscribeAndGetPublisher({},serv_prx)
-                """print("Buscando servidores Main. Por favor espere...")
+                print("Buscando servidores Main. Por favor espere...")
                 msg = COLA.get(block=True)
                 if msg == "Error":
                     raise IceFlix.TemporaryUnavailable
                 self.principal = msg
                 topic_anunciamiento.unsuscribe(serv_prx)
-                self.adapter.remove(serv_prx.ice_getIdentity())"""
+                self.adapter.remove(serv_prx.ice_getIdentity())
 
                 if iniciado_setup is False:
                     propiedades = self.communicator().getProperties()

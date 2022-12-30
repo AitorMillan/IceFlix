@@ -74,8 +74,86 @@ class ManejadorUsuarios():
             raise exc
 
 
+class FileAvailabilityAnnounceI(IceFlix.FileAvailabilityAnnounce):
+    """Sirviente que implementa la interfaz File Availability Announce"""
+    def announceFiles(media_ids, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes announceFiles"""
+        print(f"El servicio con ID {service_id}, ha anunciado que "
+              "posee los siguientes media/s id/s\n")
+        for media_id in media_ids:
+            print(f"-{media_id}\n")
+
+
+class CatalogUpdateI(IceFlix.CatalogUpdate):
+    """Sirviente que implementa la interfaz Catalog Update"""
+    def renameTile(self, media_id, new_name, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes renameTile"""
+        print(f"Se ha renombrado la película {media_id} con el siguiente nombre {new_name}\n"
+              f"ID del servicio al que se ha hecho la llamada: {service_id}\n")
+
+
+    def addTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes addTags"""
+        print(f"El usuario {user} ha añadido la/s siguiente/s tag/s\n")
+        for etiqueta in tags:
+            print(f"-{etiqueta}\n")
+        print(f"A la siguiente película: {media_id}\n"
+              f"ID del catálogo al que se ha hecho la llamada: {service_id}\n")
+
+
+    def removeTags(self, media_id, user, tags, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes removeTags"""
+        print(f"El usuario {user} ha eliminado la/s siguiente/s tag/s\n")
+        for etiqueta in tags:
+            print(f"-{etiqueta}\n")
+        print(f"De la siguiente película: {media_id}\n"
+              f"ID del catálogo al que se ha hecho la llamada: {service_id}\n")   
+
+class UserUpdateI(IceFlix.UserUpdate):
+    """Sirviente que implementa la interfaz User Update"""
+    def newToken(self, user, token, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes newToken"""
+        print(f"Se ha otorgado al usuario {user} el siguiente token {token}\n"
+              f"ID del servicio que lo ha otorgado: {service_id}\n")
+
+
+    def revokeToken(self, token, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes revokeToken"""
+        print(f"Se ha revocado el siguiente token: {token}\n"
+              f"ID del servicio que lo revoca: {service_id}\n")
+
+
+    def newUser(self, user, password_hash, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes newUser"""
+        print(f"Se ha registrado el usuario {user} con contraseña {password_hash}\n"
+              f"ID del servicio en el que se ha registrado: {service_id}\n")
+
+
+    def removeUser(self, user, service_id, current = None): # pylint:disable=unused-argument
+        """Mostramos los mensajes removeUser"""
+        print(f"Se ha eliminado el siguiente usuario: {user}\n"
+              f"ID del servicio que lo ha eliminado: {service_id}\n")
+
+
+class AnnouncementI2(IceFlix.Announcement): # pylint:disable=too-few-public-methods
+    """Sirviente que implementa la interfaz Announcement para mostrar el flujo de mensajes"""
+    def announce(self, service, service_id, current = None): # pylint:disable=unused-argument
+        """Escuchamos todos los anunciamientos y los mostramos"""
+        if service.ice_isA("::IceFlix::Main"):
+            print(f"Se ha anunciado un servicio de tipo MAIN\n"
+                  f"ID del servicio: {service_id}\n")
+        elif service.ice_isA("::IceFlix::Authenticator"):
+            print(f"Se ha anunciado un servicio de tipo AUTHENTICATOR\n"
+                  f"ID del servicio: {service_id}\n")
+        elif service.ice_isA("::IceFlix::MediaCatalog"):
+            print(f"Se ha anunciado un servicio de tipo CATALOG\n"
+                  f"ID del servicio: {service_id}\n")
+        elif service.ice_isA("::IceFlix::FileService"):
+            print(f"Se ha anunciado un servicio de tipo FILE SERVICE\n"
+                  f"ID del servicio: {service_id}\n")
+
 class AnnouncementI(IceFlix.Announcement): # pylint:disable=too-few-public-methods
-    """Sirviente que implementa la interfaz Announcement"""
+    """Sirviente que implementa la interfaz Announcement para descubrir el main"""
     def announce(self, service, service_id, current = None): # pylint:disable=unused-argument
         """EScuchamos a que un servicio main se anuncie"""
         if service.ice.isA("::IceFlix::Main"):
@@ -271,7 +349,11 @@ class Client(Ice.Application):
                                    "3. Eliminar usuarios\n"
                                    "4. Eliminar una película\n"
                                    "5. Subir una película\n"
-                                   "6. Salir del menú de administrador\n"))
+                                   "6. Monitorizar el canal UserUpdates"
+                                   "7. Monitorizar el canal CatalogUpdates"
+                                   "8. Monitorizar el canal FileAvailabilityAnnounce"
+                                   "9. Monitorizar el canal Announcements"
+                                   "10. Salir del menú de administrador\n"))
                 if opcion == 1:
                     self.renombra_peli()
                 elif opcion == 2:
@@ -283,12 +365,116 @@ class Client(Ice.Application):
                 elif opcion == 5:
                     self.subir_pelicula()
                 elif opcion == 6:
+                    self.monitorizar_user_updates()
+                elif opcion == 7:
+                    self.monitorizar_catalog_updates()
+                elif opcion == 8:
+                    self.monitorizar_file_updates()
+                elif opcion == 9:
+                    self.monitorizar_announcements()
+                elif opcion == 10:
                     break
 
             except ValueError:
                 print("Por favor, introduzca un valor válido")
             except AttributeError as exc:
                 raise exc
+
+
+    def monitorizar_announcements(self):
+        try:
+            topic_mg_proxy = self.communicator().stringToProxy(
+                    "IceStorm/TopicManager:tcp -p 10000")
+            topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
+            print("Mostrando flujo de mensajes de Announcements...\n")
+            comm = self.communicator()
+            servant = AnnouncementI2()
+            self.adapter = comm.createObjectAdapter("clientAdapter")
+            self.adapter.activate()
+            serv_prx = self.adapter.addWithUUID(servant)
+
+            topic_file = topic_manager.retrieve("Announcements")
+            topic_file.subscribeAndGetPublisher({},serv_prx)
+
+            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+                pass
+            topic_file.unsuscribe(serv_prx)
+            self.adapter.remove(serv_prx.ice_getIdentity())
+            self.adapter.destroy()
+        except IceStorm.NoSuchTopic:
+            print("No se ha encontrado el canal Announcements\n")
+
+
+    def monitorizar_file_updates(self):
+        try:
+            topic_mg_proxy = self.communicator().stringToProxy(
+                    "IceStorm/TopicManager:tcp -p 10000")
+            topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
+            print("Mostrando flujo de mensajes de FileAvailabilityAnnounces...\n")
+            comm = self.communicator()
+            servant = FileAvailabilityAnnounceI()
+            self.adapter = comm.createObjectAdapter("clientAdapter")
+            self.adapter.activate()
+            serv_prx = self.adapter.addWithUUID(servant)
+
+            topic_file = topic_manager.retrieve("FileAvailabilityAnnounces")
+            topic_file.subscribeAndGetPublisher({},serv_prx)
+
+            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+                pass
+            topic_file.unsuscribe(serv_prx)
+            self.adapter.remove(serv_prx.ice_getIdentity())
+            self.adapter.destroy()
+        except IceStorm.NoSuchTopic:
+            print("No se ha encontrado el canal FileAvailabilityAnnounce\n")
+
+
+    def monitorizar_catalog_updates(self):
+        try:
+            topic_mg_proxy = self.communicator().stringToProxy(
+                    "IceStorm/TopicManager:tcp -p 10000")
+            topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
+            print("Mostrando flujo de mensajes de Catalog Updates...\n")
+            comm = self.communicator()
+            servant = CatalogUpdateI()
+            self.adapter = comm.createObjectAdapter("clientAdapter")
+            self.adapter.activate()
+            serv_prx = self.adapter.addWithUUID(servant)
+
+            topic_cat = topic_manager.retrieve("CatalogUpdates")
+            topic_cat.subscribeAndGetPublisher({},serv_prx)
+
+            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+                pass
+            topic_cat.unsuscribe(serv_prx)
+            self.adapter.remove(serv_prx.ice_getIdentity())
+            self.adapter.destroy()
+        except IceStorm.NoSuchTopic:
+            print("No se ha encontrado el canal CatalogUpdates\n")
+
+
+    def monitorizar_user_updates(self):
+        try:
+            topic_mg_proxy = self.communicator().stringToProxy(
+                    "IceStorm/TopicManager:tcp -p 10000")
+            topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
+            print("Mostrando flujo de mensajes de User Updates...\n")
+            comm = self.communicator()
+            servant = UserUpdateI()
+            self.adapter = comm.createObjectAdapter("clientAdapter")
+            self.adapter.activate()
+            serv_prx = self.adapter.addWithUUID(servant)
+
+            topic_auth = topic_manager.retrieve("UserUpdates")
+            topic_auth.subscribeAndGetPublisher({},serv_prx)
+
+            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+                pass
+            topic_auth.unsuscribe(serv_prx)
+            self.adapter.remove(serv_prx.ice_getIdentity())
+            self.adapter.destroy()
+        except IceStorm.NoSuchTopic:
+            print("No se ha encontrado el canal UserUpdate\n")
 
 
     def subir_pelicula(self):
@@ -326,6 +512,7 @@ class Client(Ice.Application):
             self.file_service.uploadFile(self.proxy,self.admin)
             COLA.get(block=True)
             self.adapter.remove(self.proxy.ice_getIdentity())
+            self.adapter.destroy()
         except IceFlix.Unauthorized as exc:
             self.adapter.remove(self.proxy.ice_getIdentity())
             raise exc

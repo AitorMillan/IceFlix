@@ -74,9 +74,10 @@ class ManejadorUsuarios():
             raise exc
 
 
-class AnnouncementI(IceFlix.Announcement):
+class AnnouncementI(IceFlix.Announcement): # pylint:disable=too-few-public-methods
     """Sirviente que implementa la interfaz Announcement"""
-    def announce(self, service, serviceId, current = None): # pylint:disable=unused-argument
+    def announce(self, service, service_id, current = None): # pylint:disable=unused-argument
+        """EScuchamos a que un servicio main se anuncie"""
         if service.ice.isA("::IceFlix::Main"):
             proxy = IceFlix.MainPrx.uncheckedCast(service)
             if proxy is None:
@@ -122,11 +123,13 @@ class Client(Ice.Application):
         """Handles the IceFlix client CLI command."""
 
         veces_reintentado = 0
+        iniciado_setup = False
         setup_logging()
         logging.info("Starting IceFlix client...")
         while veces_reintentado != REINTENTOS:
             try:
-                topic_mg_proxy = self.communicator().stringToProxy("IceStorm/TopicManager:tcp -p 10000")
+                topic_mg_proxy = self.communicator().stringToProxy(
+                    "IceStorm/TopicManager:tcp -p 10000")
                 topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
 
                 comm = self.communicator()
@@ -137,22 +140,27 @@ class Client(Ice.Application):
 
                 topic_anunciamiento = topic_manager.retrieve("Announcements")
                 topic_anunciamiento.subscribeAndGetPublisher({},serv_prx)
-                print("Buscando servidores Main. Por favor espere...")
+                """print("Buscando servidores Main. Por favor espere...")
                 msg = COLA.get(block=True)
                 if msg == "Error":
                     raise IceFlix.TemporaryUnavailable
-                else: 
-                    self.principal = msg
-                    topic_anunciamiento.unsuscribe(serv_prx)
-                    self.adapter.remove(serv_prx.ice_getIdentity())
+                self.principal = msg
+                topic_anunciamiento.unsuscribe(serv_prx)
+                self.adapter.remove(serv_prx.ice_getIdentity())"""
 
-                propiedades = self.communicator().getProperties()
-                self.admin = propiedades.getProperty("AdminToken")
-
+                if iniciado_setup is False:
+                    propiedades = self.communicator().getProperties()
+                    self.admin = propiedades.getProperty("AdminToken")
+                    #Abrimos el archivo por si no estuviera creado ya
+                    archivo = open("usuarios.txt","a",encoding="utf-8") # pylint:disable = consider-using-with
+                    archivo.close()
+                    iniciado_setup = True
+                self.menu()
                 break
             except IceStorm.NoSuchTopic:
                 print("No se ha podido conseguir el topic. Reintentando")
                 time.sleep(5)
+                veces_reintentado += 1
             except IceFlix.TemporaryUnavailable:
                 print("No se ha podido conseguir el topic manager. Reintentando")
                 time.sleep(5)
@@ -162,16 +170,27 @@ class Client(Ice.Application):
                 print("No se ha podido conectar")
                 time.sleep(5)
                 veces_reintentado += 1
+            except AttributeError:
+                while 1:
+                    try:
+                        opcion = int(input("Se ha perdido la conexión con el servidor principal.\n"
+                              "¿Desea reintentar conectarse(0) o salir del programa(1)\n"))
+                        while opcion not in (0,1):
+                            opcion = int(input("Por favor escoja una opción válida\n"))
+                        if opcion == 0:
+                            self.adapter.destroy()
+                            veces_reintentado = 0
+                            break
+                        veces_reintentado = 3
+                        break
+                    except ValueError:
+                        print("Introduzca un valor válido")
 
+        print("Hasta la próxima :)")
         if veces_reintentado == REINTENTOS:
             print("No se ha podido establecer la conexión"
                   " con el servidor")
             return 0
-        #Abrimos el archivo por si no estuviera creado ya
-        archivo = open("usuarios.txt","a",encoding="utf-8") # pylint:disable = consider-using-with
-        archivo.close()
-        self.menu()
-        print("Hasta la próxima :)")
         return 0
 
 
@@ -237,6 +256,8 @@ class Client(Ice.Application):
                         self.token_autenticacion = None
             except ValueError:
                 print("Por favor introduzca un valor válido\n")
+            except AttributeError as exc:
+                raise exc
 
 
     def menu_admin(self,estado):
@@ -266,6 +287,8 @@ class Client(Ice.Application):
 
             except ValueError:
                 print("Por favor, introduzca un valor válido")
+            except AttributeError as exc:
+                raise exc
 
 
     def subir_pelicula(self):
@@ -283,6 +306,8 @@ class Client(Ice.Application):
                     self.inicia_file_uploader()
                     ARCHIVO_SUBIDA.close()
                     print("El archivo se ha subido correctamente\n")
+        except AttributeError as exc:
+            raise exc
         except IceFlix.Unauthorized:
             print("Carece de los permisos para realizar esta opción, por favor contacte"
                   " con el administrador\n")
@@ -328,6 +353,8 @@ class Client(Ice.Application):
                 except FileNotFoundError:
                     print(f"No se encontró la ruta /archivos/{self.seleccion.info.name}")
                     break
+                except AttributeError as exc:
+                    raise exc
                 except IceFlix.WrongMediaId:
                     print("Hay un error con el identificador de la película, por favor,"
                           " contacte con la empresa\n")
@@ -398,6 +425,8 @@ class Client(Ice.Application):
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede añadir el usuario ahora mismo, inténtelo más tarden\n")
+        except AttributeError as exc:
+            raise exc
         except IceFlix.Unauthorized:
             print("Carece de los permisos para realizar esta acción\n")
         except Ice.ConnectTimeoutException:
@@ -424,6 +453,8 @@ class Client(Ice.Application):
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede añadir el usuario ahora mismo, inténtelo más tarden\n")
+        except AttributeError as exc:
+            raise exc
         except IceFlix.Unauthorized:
             print("Carece de los permisos para realizar esta acción\n")
         except Ice.ConnectTimeoutException:
@@ -442,6 +473,8 @@ class Client(Ice.Application):
                 self.catalogo.renameTile(self.seleccion.mediaId,nuevo_nombre,self.admin)
                 self.seleccion.info.name = nuevo_nombre
 
+            except AttributeError as exc:
+                raise exc
             except IceFlix.TemporaryUnavailable:
                 print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
             except IceFlix.Unauthorized:
@@ -469,6 +502,8 @@ class Client(Ice.Application):
                 while input("¿Desea añadir más etiquetas? (S/N)\n").capitalize() == "S":
                     tags.append(input("Introduzca la etiqueta\n"))
                 num_reintentos = 0
+            except AttributeError as exc:
+                raise exc
             except IceFlix.TemporaryUnavailable:
                 print("El catálogo no se encuentra actualmente disponible, pruebe más tarde\n")
                 num_reintentos = 3
@@ -484,6 +519,8 @@ class Client(Ice.Application):
                                                                                     self.contrasena)
                     num_reintentos += 1
                     time.sleep(1)
+                except AttributeError as exc:
+                    raise exc
                 except IceFlix.TemporaryUnavailable:
                     print("Ha ocurrido un error, por favor trate de iniciar sesión de nuevo\n")
                     self.token_autenticacion = None
@@ -515,6 +552,8 @@ class Client(Ice.Application):
                 while input("¿Desea añadir más etiquetas a eliminar? (S/N)\n").capitalize() == "S":
                     tags.append(input("Introduzca la etiqueta\n"))
                 num_reintentos = 0
+            except AttributeError as exc:
+                raise exc
             except IceFlix.TemporaryUnavailable:
                 print("El catálogo no se encuantra actualmente disponible, pruebe más tarde\n")
                 num_reintentos = 3
@@ -530,6 +569,8 @@ class Client(Ice.Application):
                                                                                     self.contrasena)
                     num_reintentos+=1
                     time.sleep(1)
+                except AttributeError as exc:
+                    raise exc
                 except IceFlix.WrongMediaId:
                     print("Ha habido un error al eliminar los tags a la película seleccionada.\n"
                           "Por favor, inténtelo con otra película\n")
@@ -577,6 +618,8 @@ class Client(Ice.Application):
             while opcion not in (0,1):
                 opcion = int(input("Por favor, escoja una opción válida\n"))
             num_reintentos = 0
+        except AttributeError as exc:
+            raise exc
         except IceFlix.TemporaryUnavailable:
             print("El servicio se encuentra temporalmente fuera de servicio, "
                   "por favor, inténtelo más tarde\n")
@@ -599,6 +642,8 @@ class Client(Ice.Application):
                                                                                 self.contrasena)
                 num_reintentos += 1
                 time.sleep(1)
+            except AttributeError as exc:
+                raise exc
             except IceFlix.WrongMediaId:
                 print("Ha habido un eror al procesar los títulos\n")
                 break
@@ -624,6 +669,8 @@ class Client(Ice.Application):
                 opcion = int(input("Por favor, escoja una opción válida\n"))
             num_reintentos = 0
 
+        except AttributeError as exc:
+            raise exc
         except IceFlix.TemporaryUnavailable:
             print("El servicio se encuentra temporalmente fuera de servicio, "
                 "por favor, inténtelo más tarde\n")
@@ -730,6 +777,8 @@ class Client(Ice.Application):
 
         except IceFlix.TemporaryUnavailable:
             print("No se puede cambiar su usuario ahora mismo, inténtelo más tarden\n")
+        except AttributeError as exc:
+            raise exc
         except IceFlix.Unauthorized:
             print("Carece de los permisos para realizar esta acción\n")
         except Ice.ConnectTimeoutException:
@@ -761,6 +810,8 @@ class Client(Ice.Application):
         except IceFlix.Unauthorized:
             print("Error intentando conseguir el token de autenticación\n")
             self.token_autenticacion = None
+        except AttributeError as exc:
+            raise exc
         except IceFlix.TemporaryUnavailable:
             print("No se ha podido conseguir el token porque está desconectado\n")
         except Ice.ConnectTimeoutException:
@@ -779,6 +830,8 @@ class Client(Ice.Application):
 
         except IceFlix.TemporaryUnavailable as exc:
             raise exc
+        except AttributeError as exc:
+            raise exc
 
 
     def comprueba_proxy_file_service(self):
@@ -796,6 +849,8 @@ class Client(Ice.Application):
             print("El servidor de archivos está temporalmente fuera de servicio"
                   " inténtelo de nuevo más tarde")
             raise exc
+        except AttributeError as exc:
+            raise exc
 
 
     def comprueba_proxy_catalogo(self):
@@ -812,6 +867,8 @@ class Client(Ice.Application):
         except IceFlix.TemporaryUnavailable as exc:
             print("El catálogo está temporalmente fuera de servicio"
                   " inténtelo de nuevo más tarde")
+            raise exc
+        except AttributeError as exc:
             raise exc
 
 

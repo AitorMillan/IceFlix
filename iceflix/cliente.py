@@ -156,7 +156,7 @@ class AnnouncementI(IceFlix.Announcement): # pylint:disable=too-few-public-metho
     """Sirviente que implementa la interfaz Announcement para descubrir el main"""
     def announce(self, service, service_id, current = None): # pylint:disable=unused-argument
         """EScuchamos a que un servicio main se anuncie"""
-        if service.ice.isA("::IceFlix::Main"):
+        if service.ice_isA("::IceFlix::Main"):
             proxy = IceFlix.MainPrx.uncheckedCast(service)
             if proxy is None:
                 COLA.put("Error")
@@ -206,8 +206,10 @@ class Client(Ice.Application):
         logging.info("Starting IceFlix client...")
         while veces_reintentado != REINTENTOS:
             try:
-                topic_mg_proxy = self.communicator().stringToProxy(
-                    "IceStorm/TopicManager:tcp -p 10000")
+                propiedades = self.communicator().getProperties()
+                
+                topic_mg_proxy = self.communicator().propertyToProxy(
+                                "IceStorm.TopicManager")
                 topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
 
                 comm = self.communicator()
@@ -215,6 +217,7 @@ class Client(Ice.Application):
                 self.adapter = comm.createObjectAdapter("clientAdapter")
                 self.adapter.activate()
                 serv_prx = self.adapter.addWithUUID(servant)
+                self.shutdownOnInterrupt()
 
                 topic_anunciamiento = topic_manager.retrieve("Announcements")
                 topic_anunciamiento.subscribeAndGetPublisher({},serv_prx)
@@ -223,12 +226,12 @@ class Client(Ice.Application):
                 if msg == "Error":
                     raise IceFlix.TemporaryUnavailable
                 self.principal = msg
-                topic_anunciamiento.unsuscribe(serv_prx)
+                topic_anunciamiento.unsubscribe(serv_prx)
                 self.adapter.remove(serv_prx.ice_getIdentity())
-
+                self.adapter.destroy()
                 if iniciado_setup is False:
-                    propiedades = self.communicator().getProperties()
                     self.admin = propiedades.getProperty("AdminToken")
+                    self.admin = hashlib.sha256(str(self.admin).encode()).hexdigest()
                     #Abrimos el archivo por si no estuviera creado ya
                     archivo = open("usuarios.txt","a",encoding="utf-8") # pylint:disable = consider-using-with
                     archivo.close()
@@ -248,7 +251,8 @@ class Client(Ice.Application):
                 print("No se ha podido conectar")
                 time.sleep(5)
                 veces_reintentado += 1
-            except AttributeError:
+            except AttributeError as exc:
+                print(exc)
                 while 1:
                     try:
                         opcion = int(input("Se ha perdido la conexión con el servidor principal.\n"
@@ -292,6 +296,8 @@ class Client(Ice.Application):
                         self.cambiar_credenciales()
                     elif opcion == 4:
                         break
+                    elif opcion == 5:
+                        self.menu_admin("hola")
 
                 else:
                     estado = "CONEXIÓN ESTABLECIDA. ESTADO: AUTENTICADO. \n"
@@ -349,10 +355,10 @@ class Client(Ice.Application):
                                    "3. Eliminar usuarios\n"
                                    "4. Eliminar una película\n"
                                    "5. Subir una película\n"
-                                   "6. Monitorizar el canal UserUpdates"
-                                   "7. Monitorizar el canal CatalogUpdates"
-                                   "8. Monitorizar el canal FileAvailabilityAnnounce"
-                                   "9. Monitorizar el canal Announcements"
+                                   "6. Monitorizar el canal UserUpdates\n"
+                                   "7. Monitorizar el canal CatalogUpdates\n"
+                                   "8. Monitorizar el canal FileAvailabilityAnnounce\n"
+                                   "9. Monitorizar el canal Announcements\n"
                                    "10. Salir del menú de administrador\n"))
                 if opcion == 1:
                     self.renombra_peli()
@@ -397,9 +403,9 @@ class Client(Ice.Application):
             topic_file = topic_manager.retrieve("Announcements")
             topic_file.subscribeAndGetPublisher({},serv_prx)
 
-            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+            while input("Para dejar de escuchar pulsa 'Q'\n") != "Q":
                 pass
-            topic_file.unsuscribe(serv_prx)
+            topic_file.unsubscribe(serv_prx)
             self.adapter.remove(serv_prx.ice_getIdentity())
             self.adapter.destroy()
         except IceStorm.NoSuchTopic:
@@ -422,9 +428,9 @@ class Client(Ice.Application):
             topic_file = topic_manager.retrieve("FileAvailabilityAnnounces")
             topic_file.subscribeAndGetPublisher({},serv_prx)
 
-            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+            while input("Para dejar de escuchar pulsa 'Q'\n") != "Q":
                 pass
-            topic_file.unsuscribe(serv_prx)
+            topic_file.unsubscribe(serv_prx)
             self.adapter.remove(serv_prx.ice_getIdentity())
             self.adapter.destroy()
         except IceStorm.NoSuchTopic:
@@ -447,9 +453,9 @@ class Client(Ice.Application):
             topic_cat = topic_manager.retrieve("CatalogUpdates")
             topic_cat.subscribeAndGetPublisher({},serv_prx)
 
-            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+            while input("Para dejar de escuchar pulsa 'Q'\n") != "Q":
                 pass
-            topic_cat.unsuscribe(serv_prx)
+            topic_cat.unsubscribe(serv_prx)
             self.adapter.remove(serv_prx.ice_getIdentity())
             self.adapter.destroy()
         except IceStorm.NoSuchTopic:
@@ -472,9 +478,9 @@ class Client(Ice.Application):
             topic_auth = topic_manager.retrieve("UserUpdates")
             topic_auth.subscribeAndGetPublisher({},serv_prx)
 
-            while input("Para dejar de escuchar pulsa 'Q'") != "Q":
+            while input("Para dejar de escuchar pulsa 'Q'\n") != "Q":
                 pass
-            topic_auth.unsuscribe(serv_prx)
+            topic_auth.unsubscribe(serv_prx)
             self.adapter.remove(serv_prx.ice_getIdentity())
             self.adapter.destroy()
         except IceStorm.NoSuchTopic:

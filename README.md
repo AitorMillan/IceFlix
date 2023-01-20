@@ -21,6 +21,14 @@ Una vez hemos hecho hesto podemos ejecutar el programa mediante "**./run_client 
 Otra opción es mediante el comando "**iceflix {proxy del main}**"
 
 Si quieres desinstalar el programa puedes hacerlo poniendo "**pip uninstall IceFlix-Client**"
+
+  # Errores de pylint deshabilitados
+  
+  La mayoría de errores de pylint que tengo desactivados son debido a restricciones de la propia práctica, al tener que implementar todas las interfaces para poder escuchar en todos los canales, he tenido que desactivar todos los errores de **unused-argument** que había, al igual que pasa con los errores  **too-few-public-methods** o **too-many-arguments**, al ser necesidades del propio programa he considerado correcto desactivarlos para que pylint no los marque como erróneos, ya que no es algo que pueda controlar.
+  
+  No he desactivado los errores de **invalid-name** que me lanza para los nombres de los métodos de las interfaces de los canales de IceStorm porque no sabía si eso se consideraría como desahibilitar muchos errores de pylint, pero en su mayoría son errores que yo no puedo evitar por lo comentado anteriormente.
+  
+  No obstante, si se han eliminado errores de pylint, todos relacionados con **consider-using-with** a la hora de abrir archivos, los he desactivado porque pienso que la implementación en esos casos usando el "with" de Python hace el programa más engorroso
   
   # Decisiones de diseño
   

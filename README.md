@@ -1,12 +1,18 @@
 # Cómo ejecutar el programa
 
+## Ejecutar icestorm
+
+Lo primero de todo es ejecutar el archivo ""**./run_icestorm**"" para que se creen los topics correspondientes y el programa funcione correctamente.
+
 ## Usando python3
 
 Si quieres ejecutar el programa utilizando el comando python3 debes ejecutar lo siguiente desde la carpeta distribuidos_lab:
 
-"**python3 iceflix/cliente.py --Ice.Config=configs/client.config '{proxy del main}'**"
+"**python3 iceflix/cliente.py --Ice.Config=configs/client.config**"
 
-## Usando ./run_client
+Adicionalmente se ha incluido un arhcivo de ejecución para evitar tener que escribir todo el comando cada vez que se quiera ejecutar el programa, para ejecutarlo debemos escribir "**./run_client_python**"
+
+## Usando ./run_client_iceflix
 
 Para poder ejecutar el programa de esta manera debes de utilizar los siguientes comandos en la carpeta distribuidos_lab:
 
@@ -14,11 +20,13 @@ Para poder ejecutar el programa de esta manera debes de utilizar los siguientes 
 
 Una vez se ha ejecutado el comando anterior se debe de ejecutar el siguiente:
 
-"**python -m pip install .**"   (si no quieres que se cree la carpeta build añade la opción -e)
+"**python -m pip install .**" o "**python3 -m pip install .**" 
 
-Una vez hemos hecho hesto podemos ejecutar el programa mediante "**./run_client {proxy del main}**"
+En mi caso al instalar iceflix me decía que no se añadía al PATH, si ocurre esto no se podrá ejecutar el programa mediante el método listado más abajo.
 
-Otra opción es mediante el comando "**iceflix {proxy del main}**"
+Para solucionarlo de forma temporal (en la terminal donde estamos), deberemos escribir en nuestro directorio raíz: ""**export PATH="/home/{carpeta_personal}/.local/bin:$PATH"**""
+
+Una vez hemos hecho esto podemos ejecutar el programa mediante "**./run_client_iceflix**"
 
 Si quieres desinstalar el programa puedes hacerlo poniendo "**pip uninstall IceFlix-Client**"
 

@@ -207,7 +207,7 @@ class Client(Ice.Application):
         while veces_reintentado != REINTENTOS:
             try:
                 propiedades = self.communicator().getProperties()
-                
+
                 topic_mg_proxy = self.communicator().propertyToProxy(
                                 "IceStorm.TopicManager")
                 topic_manager = IceStorm.TopicManagerPrx.checkedCast(topic_mg_proxy)
